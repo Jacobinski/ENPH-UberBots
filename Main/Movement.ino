@@ -164,20 +164,18 @@ bool detectIntersection(){
 */
 void turn(char dir){
 
-   Serial.print("Turning ");
-   Serial.println(dir);
    int Lm = 0; //Left middle QRD Signal
    int Rm = 0; //Right middle QRD Signal
+
+   // Begin by going past the intersection. 
+   // This will give us space to make a wider turn.
 
    if (dir == LEFT){
       delay(150); //Overshoot
       motor.speed(2,-50); //left
       motor.speed(3,50); //right
       delay(500);
-      while(Rm < rthresh){
-        //LCD.clear();
-        //LCD.home();
-        //LCD.print("Left");
+      while(Rm < rthresh){;
         Rm = analogRead(3);
       }
       motor.stop_all();
@@ -190,9 +188,6 @@ void turn(char dir){
       motor.speed(3,-50); //right
       delay(500); //Pause for 0.5s
       while(Lm < lthresh){
-        //LCD.clear();
-        //LCD.home();
-        //LCD.print("Right");
           Lm = analogRead(5);
       }
       motor.stop_all();

@@ -133,56 +133,21 @@ char getDirection(int cN, int fN){
 }
 
 /*
-  Function: getIntersectionDirections
-
-  Description:
-  Returns the allowed directions (N,E,S,W) in the form of a pointer (array
-  of 4 values) corresponding to the given node. The values in the array will
-  be as follows
-    - [1] north (N) or undefined (U)
-    - [2] east (E) or undefined (U)
-    - [3] south (S) or undefined (U)
-    - [4] west (W) or undefined (U)
-  A node value that is undefined will return [U,U,U,U]
-
-  Code Inputs:
-    * node: (int) Node for which to get directions
-  Code Outputs:
-    * dir_p: (char*) An array of 4 values corresponding to the description's 
-                     array values.
-*/
-char *getIntersectionDirections(int node){
-
-  char *turn = (char*)malloc(4);
-  for(int i = 0; i < 4; i++){
-    if (node > 20 || node < 1)
-      turn[i] = UNDEFINED;
-    else{
-      turn[i] = validDirections[node][i];
-    }
-  }
-  return turn;
-}
-
-/*
   Function: turnDirection
 
   Description:
   This function returns the direction to move turn the robot from the
-  current node to the future node. It is passed the future node, as well 
-  as pointers to the current direction and current node. This function
-  will automatically update the values of the current node & current
-  direction to reflect the turn direction.
+  current node to the future node.
   The output will either be forward, left, right (F,L,R).
 
   Code Inputs:
-    * *cN: The current node pointer
+    * cN: The current node 
     * fN: The future node
-    * *dir: The current direction pointer of the robot
+    * dir: The current direction of the robot
   Code Outputs:
     * Character (F,L,R)
 */
-char turnDirection(int *cN, int fN, char *dir){
+char turnDirection(int cN, int fN, char dir){
 
   char p = *dir; // Previous Direction
   char n = getDirection(*cN,fN); // Next Direction
@@ -201,7 +166,27 @@ char turnDirection(int *cN, int fN, char *dir){
   if (p == EAST && n == SOUTH)   {turn = RIGHT;}
   if (p == EAST && n == EAST)    {turn = FORWARD;}
 
-  /* The circle causes problems for directions. Going from node 9 to node
+  return turn;
+}
+
+/*
+  Function: updateParameters
+
+  Description:
+  This function will update the robots direction and current node. To reflect
+  new values. This should be called after every intersection, however may
+  also be called after two-point turns (if we choose to implement them).
+  The cN and dir inputs are pointers that will be changed upon function calls.
+
+  Code Inputs:
+    * *cN: The current node pointer 
+    * fN: The future node
+    * *dir: The current direction of the robot
+  Code Outputs:
+    * None
+*/
+void updateParameters(int *cN, int fN, char *dir){
+    /* The circle causes problems for directions. Going from node 9 to node
    12 starts off south, then moves north. To get the final direction, figure
    out what direction the robot will approach the new node. This is done
    by finding the opposite direction of future towards current.*/
@@ -213,42 +198,6 @@ char turnDirection(int *cN, int fN, char *dir){
   if (od == WEST) {nd = EAST;}
   *dir = nd; // Change the current direction to the future direction.
   *cN = fN; // Change the current node to the future node.
-
-  return turn;
-}
-
-/*
-  Function: get
-
-  Description:
-  Returns the direction to given the current node (cN) and the
-  next node (nN). If no values are given returns a value of U to
-  signfify an undefined output 
-
-  Code Inputs:
-    * cN: (Int) Current node of the robot
-    * nN: (Int) Next node of the robot
-  Code Outputs:
-    * dir: (char) Direction to turn to get to new node.
-*/
-char getRandomTurn(){
-  int rand = random(1,3);
-  char turn = UNDEFINED;
-  if (rand == 1)
-    turn = LEFT;
-  else if (rand == 2)
-    turn = RIGHT;
-  else if (rand == 3)
-    turn = FORWARD;
-  else
-  {
-    motor.stop_all();
-    LCD.clear();
-    LCD.home();
-    LCD.print("Error in getRandomTurn");
-    delay(100000); // 100 seconds
-  }
-  return turn;
 }
 
 StackList<int> pathFind(int start, int finish, int collision){
