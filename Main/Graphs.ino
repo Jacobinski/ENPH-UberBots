@@ -149,8 +149,8 @@ char getDirection(int cN, int fN){
 */
 char turnDirection(int cN, int fN, char dir){
 
-  char p = *dir; // Previous Direction
-  char n = getDirection(*cN,fN); // Next Direction
+  char p = dir; // Previous Direction
+  char n = getDirection(cN,fN); // Next Direction
   char turn = UNDEFINED;
 
   if (p == NORTH && n == NORTH)  {turn = FORWARD;}

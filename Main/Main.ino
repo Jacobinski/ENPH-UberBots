@@ -15,11 +15,11 @@
 
 bool passenger; // Passenger carrying status
 char turnDir; // The direction of the next turn
-char dir;    char* dir_p; // Direction, N,S,E,W
-int cN;      int* cN_p; // Holds the current node (cN) in memory
+char dir;  char* dir_p; // Direction, N,S,E,W
+int cN;    int* cN_p; // Holds the current node (cN) in memory
 QueueList <int> fN; // Holds all of the future nodes (fN) in memory
 
-//Prototype to fix errors
+//Prototypes for functions the complier misses
 StackList<int> pathFind(int start, int finish, int collision);
 void enableExternalInterrupt(unsigned int INTX, unsigned int mode);
 
@@ -34,40 +34,27 @@ void setup() {
   while(!path.isEmpty()){
     fN.push(path.pop()); //path only exists in setup() [bug?]. This is a fix
   }
-  //Serial.begin(9600); Serial.println("Start code");
+  Serial.begin(9600); Serial.println("Start code");
 }
 
 void loop() {
   while(!fN.isEmpty()){
   	if (turnDir == UNDEFINED) {
-  		turnDir = turnDirection(cN_p,fN.pop(),dir_p); //Get next turn direction
+  		turnDir = turnDirection(cN,fN.peek(),dir); //Get next turn direction
   	}
-
-
-
-  }
-
-  bool intersection = detectIntersection();
-  if (!fN.isEmpty()){
-    if (intersection == true){
-      turnDir = turnDirection(cN_p,fN.pop(),dir_p);
-      Serial.println("Intersection Detected");
-      LCD.clear();
-      LCD.home();
-      LCD.print(turnDir);
-      turn(turnDir);
-      //followTape();
+    if (detectIntersection(turnDir)){ // See if we need to turn
+      updateParameters(cN_p, fN.pop(), dir_p); // Account for the new position at the intersection.
+      turn(turnDir); 
+      turnDir = UNDEFINED; // Clear the turn direction
     }
     else{
-      Serial.println("Following Tape");
       followTape();
     }
   }
-  else{
+  // Once the motor has run out of commands
     motor.stop_all();
     LCD.clear();
     LCD.home();
     LCD.print("Done");
     delay(10000);
-  }
 }
