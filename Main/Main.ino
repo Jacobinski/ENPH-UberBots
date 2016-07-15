@@ -28,9 +28,9 @@ void setup() {
   enableExternalInterrupt(INT1,LOW);
   passenger = false;
   turnDir = UNDEFINED;
-  dir = SOUTH; dir_p = &dir;
+  dir = NORTH; dir_p = &dir;
   cN = 19; cN_p = &cN; // Initial value of current position. Defined as the node the vehicle is approaching.
-  StackList <int> path = pathFind(19,7,999); 
+  StackList <int> path = pathFind(19,1,999); 
   while(!path.isEmpty()){
     fN.push(path.pop()); //path only exists in setup() [bug?]. This is a fix
   }
@@ -38,10 +38,11 @@ void setup() {
 }
 
 void loop() {
-  while(!fN.isEmpty()){
+  /*while(!fN.isEmpty()){
   	if (turnDir == UNDEFINED) {
   		turnDir = turnDirection(cN,fN.peek(),dir); //Get next turn direction
   	}
+    //while (detectCollision()){motor.stop_all();delay(10000);}
     if (detectIntersection(turnDir)){ // See if we need to turn
       updateParameters(cN_p, fN.pop(), dir_p); // Account for the new position at the intersection.
       turn(turnDir); 
@@ -50,6 +51,15 @@ void loop() {
     else{
       followTape();
     }
+  }*/
+
+
+  while(!detectCollision()){
+    followTape();
+  }
+  turnAround();
+  while(!detectCollision()){
+    followTape();
   }
   // Once the motor has run out of commands
     motor.stop_all();
