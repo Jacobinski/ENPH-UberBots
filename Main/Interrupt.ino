@@ -52,7 +52,7 @@ ISR(INT1_vect)
          LCD.print(analogRead(0));
          LCD.print("ri:");
          LCD.print(analogRead(1));
-          LCD.print("kp:");
+         LCD.print("kp:");
          LCD.print(knob(7)/4);
       t = 0;
     }

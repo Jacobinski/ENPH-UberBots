@@ -30,7 +30,7 @@
 #define FORWARD 'F'
 #define UNDEFINED 'U'
 
-const int distance[NODES][NODES] = //Non-zero values are valid connections (cm)
+const int nodeDistance[NODES][NODES] = //Non-zero values are valid connections (cm)
 {  
   {0,87,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 1
   {87,0,99,0,115,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 2
@@ -105,7 +105,7 @@ const char nodeDirections[NODES][NODES] = //Defined from edges LEAVING the [x][]
   Function: getDirection
 
   Description:
-  Returns the direction to given the current node (cN) and the
+  Returns the direction given the current node (cN) and the
   next node (nN). If no values are given returns a value of U to
   signfify an undefined output 
 
@@ -130,6 +130,18 @@ char getDirection(int cN, int fN){
     delay(100000); // 100 seconds
   }
   return dir;
+}
+
+// This is the counterpart to getDirection. Given a node and a compass direction,
+// this function returns the node in that direction
+int getNode(int cN, char dir){
+
+  int output = 999; // This should be 1 to 20. This is the error value
+  for (int i=1;i<=NODES; i++){
+    if (nodeDirections[cN][i-1] == dir) output = i;
+  }
+  return output;
+
 }
 
 /*
@@ -186,10 +198,10 @@ char turnDirection(int cN, int fN, char dir){
     * None
 */
 void updateParameters(int *cN, int fN, char *dir){
-    /* The circle causes problems for directions. Going from node 9 to node
-   12 starts off south, then moves north. To get the final direction, figure
-   out what direction the robot will approach the new node. This is done
-   by finding the opposite direction of future towards current.*/
+  //The circle causes problems for directions. Going from node 9 to node
+  //12 starts off south, then moves north. To get the final direction, figure
+  //out what direction the robot will approach the new node. This is done
+  //by finding the opposite direction of future towards current.
   char od = getDirection(fN,*cN); // opposite direction 
   char nd = UNDEFINED; // new direction
   if (od == NORTH) {nd = SOUTH;}
@@ -200,7 +212,24 @@ void updateParameters(int *cN, int fN, char *dir){
   *cN = fN; // Change the current node to the future node.
 }
 
-StackList<int> pathFind(int start, int finish, int collision){
+/*
+  Function: pathFind
+
+  Description:
+  This function will find the shortest distance by using the Dijkstra
+  algorithm. It will use the distance[][] array above for determining
+  distances. It will avoid reversing by considering the current 
+  direction of the robot. 
+
+  Code Inputs:
+    * start: The current node of the robot (node that the robot is approaching)
+    * finish: The desired final node of the robot.
+    * direction: The current direction of the robot
+  Code Outputs:
+    * StackList: A stack of future commands. The first to be executed will be 
+                 on top of the stack.
+*/
+StackList<int> pathFind(int start, int finish, char direction){
   // The collision will be set to 0 if no collision, or the node value
   // where a collision was detected, allowing no link to be made between
   // cN and collisionNode for a direct path.  
@@ -215,7 +244,9 @@ StackList<int> pathFind(int start, int finish, int collision){
   bool check[20]; // Nodes already checked
   int dist[20]; // Distances from start to each node
   int prev[20]; // Best connection to previous node
-  for (int c=0;c<20; c++){check[c]=false;dist[c]=999;prev[c]=999;}
+  int distance[20][20]; 
+  for(int a=0;a<20,a++){for(b=0;b<20;b++){distance[a][b]=nodeDistance[a][b];}} //Copy nodeDistance to clean array
+  for(int c=0;c<20;c++){check[c]=false;dist[c]=999;prev[c]=999;} //Assign above array values
   
   dist[cN-1] = 0; // Initialize the distance from start -> start = 0
   check[cN-1] = true; // Starting node is checked
@@ -228,10 +259,6 @@ StackList<int> pathFind(int start, int finish, int collision){
           dist[i-1] = dist[cN-1] + len;
           prev[i-1] = cN; 
       }
-      //Serial.print("Loop #"); Serial.println(i);
-      //for (int a = 0; a<20; a++){Serial.print(dist[a]); Serial.print(" ");} Serial.println();
-      //for (int a = 0; a<20; a++){Serial.print(prev[a]); Serial.print(" ");} Serial.println();
-      //for (int a = 0; a<20; a++){Serial.print(check[a]); Serial.print(" ");} Serial.println();
     }
     // Find the next minimum node length. If this it the final node, end the algorithm.
     int nextNode;
@@ -262,6 +289,3 @@ StackList<int> pathFind(int start, int finish, int collision){
   }
   return output;
 }
-
-
-
