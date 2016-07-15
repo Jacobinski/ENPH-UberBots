@@ -122,57 +122,6 @@ void followTape(){
    lasterr=error;
 }
 
-// TO BE COMPLETED - WRITE DESCRIPTION
-void r_followTape(){
-  int kd = knob(DERIVATIVE)/4; //Derivative Gain Multiplier 
-  int kp = knob(PROPORTIONAL)/4; //Proportional Gain Multiplier
-  int left = analogRead(LEFT_TAPE); //Left QRD Signal
-  int right = analogRead(RIGHT_TAPE); //Right QRD Signal
-
-   if ((left>lthresh)&&(right>rthresh)) error = 0;
-   if ((left>lthresh)&&(right<rthresh)) error = -1;
-   if ((left<lthresh)&&(right>rthresh)) error = +1;
-   if ((left<lthresh)&&(right<rthresh))
-   {
-     if (lasterr>0) error = 5;
-     if (lasterr<=0) error = -5;
-   }
-   if (!(error==lasterr))
-   {
-     recerr=lasterr;
-     q=m;
-     m=1;
-   }
-  
-   p=kp*error;
-   d=(int)((float)kd*(float)(error-recerr)/(float)(q+m));
-   con = p+d;
-
-   if (c==10)
-     {
-         LCD.clear();
-         LCD.setCursor(0,0);
-         LCD.print("lm:");
-         LCD.print(analogRead(5));
-         LCD.print("rm:");
-         LCD.print(analogRead(3)); 
-         LCD.print("kd:");
-         LCD.print(kd); 
-         LCD.setCursor(0,1);
-         LCD.print("li:");
-         LCD.print(analogRead(0));
-         LCD.print("ri:");
-         LCD.print(analogRead(1));
-          LCD.print("kp:");
-         LCD.print(kp); 
-         c=0;
-     }
-   c=c+1;
-   m=m+1;
-   motor.speed(RIGHT_MOTOR,-(vel-con)); //left
-   motor.speed(LEFT_MOTOR,-(vel+con)); //right
-   lasterr=error;
-}
 
 /*
   Function: detectIntersection
@@ -222,8 +171,8 @@ bool detectIntersection(char dir){
   Code Outputs:
     * None
   TINAH Inputs:
-    * Motor 0: Right Motor
-    * Motor 1: Left Motor
+    * Motor : Right Motor
+    * Motor : Left Motor
 */
 void turn(char dir){
 
@@ -264,46 +213,61 @@ void turn(char dir){
    }
 }
 
-//TO BE COMPLETED - WRITE DESCRIPTION
-void wide_turn(char dir){
+void turnAround(){
 
-   int L = 0; //Left middle QRD Signal
-   int R = 0; //Right middle QRD Signal
+  int Lm = 0; // Left middle QRD
+  int Rm = 0; // Right middle QRD
+  int i = 0; // Turn counter
+  int V = 60; // Velocity for turn
+  int ti; 
+  int tf; 
+  int turnTime = 600; //ms
+  bool stopTurn = false;
 
-   // Begin by going past the intersection. 
-   // This will give us space to make a wider turn.
-
-   if (dir == LEFT){
-      delay(150); //Overshoot
-      motor.speed(LEFT_MOTOR,0); //left
-      motor.speed(RIGHT_MOTOR,50); //right
-      delay(500);
-      while(R < rthresh){;
-        R = analogRead(RIGHT_TAPE);
+  if (true == true){ // We will determine direction with this eventually
+      motor.speed(LEFT_MOTOR,-V);
+      motor.speed(RIGHT_MOTOR,-V/2);
+      delay(1000); //Reverse for 0.3 sec
+      //MAYBE OVERSHOOT TO SEE IF NEAR AN INTERSECTION, THEN PULL FORWARD AND DO THE TURN
+      while(stopTurn == false){
+        if(i % 2 == 1){
+            motor.speed(LEFT_MOTOR,-V);
+            motor.speed(RIGHT_MOTOR,-V/2);
+            ti = millis(); //Initial time
+            tf = millis(); //Final time
+            while(tf-ti < turnTime){
+              if ( analogRead(LEFT_TAPE) > lthresh || analogRead(RIGHT_TAPE) > rthresh) stopTurn = true;
+              tf = millis(); //Final time
+            }
+        } else {
+            motor.speed(LEFT_MOTOR,V/2);
+            motor.speed(RIGHT_MOTOR,V);
+            ti = millis(); //Initial time
+            tf = millis(); //Final time
+            while(tf-ti < turnTime){
+              if ( analogRead(LEFT_TAPE) > lthresh || analogRead(RIGHT_TAPE) > rthresh) stopTurn = true;
+              tf = millis(); //Final time
+            }
+        }
+        i = i + 1;
       }
-      motor.stop_all();
-      error = 0; //Reset PID
-      lasterr = 0;
-   } 
-   else if (dir == RIGHT){
-      delay(150); //Overshoot
-      motor.speed(LEFT_MOTOR,50); //left
-      motor.speed(RIGHT_MOTOR,0); //right
-      delay(500); //Pause for 0.5s
-      while(L < lthresh){
-          L = analogRead(LEFT_TAPE);
-      }
-      motor.stop_all();   
-      error = 0; //Reset PID
-      lasterr = 0;
-   } 
-   else{
-      //motor.speed(LEFT_MOTOR,20-con); //left
-      //motor.speed(RIGHT_MOTOR,20+con); //right
-      //delay(180); //Just pass the intersection
-   }
+  }
 }
 
+/*
+  Function: detectCollision
+
+  Description:
+  Detects if the front bumper hit an object. Returns a boolean.
+
+  Code Inputs:
+    * None
+  Code Outputs:
+    * True if collision, else falser
+  TINAH Inputs:
+    * Switch: Left collision sensor
+    * Switch: Right collision sensor
+*/
 bool detectCollision(){
   bool output = false;
   int left = digitalRead(LEFT_FWD_COLLISION); 

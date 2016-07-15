@@ -42,7 +42,7 @@ void loop() {
   	if (turnDir == UNDEFINED) {
   		turnDir = turnDirection(cN,fN.peek(),dir); //Get next turn direction
   	}
-    while (detectCollision()){motor.stop_all();delay(10000);}
+    //while (detectCollision()){motor.stop_all();delay(10000);}
     if (detectIntersection(turnDir)){ // See if we need to turn
       updateParameters(cN_p, fN.pop(), dir_p); // Account for the new position at the intersection.
       turn(turnDir); 
@@ -52,10 +52,15 @@ void loop() {
       followTape();
     }
   }*/
-  while(!detectIntersection(FORWARD)){
-    r_followTape();
+
+
+  while(!detectCollision()){
+    followTape();
   }
-  
+  turnAround();
+  while(!detectCollision()){
+    followTape();
+  }
   // Once the motor has run out of commands
     motor.stop_all();
     LCD.clear();
