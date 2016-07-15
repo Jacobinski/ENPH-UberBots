@@ -32,10 +32,12 @@
 #define RIGHT_INTERSECTION 1
 #define LEFT_TAPE 5
 #define RIGHT_TAPE 3
-#define LEFT_MOTOR 2
-#define RIGHT_MOTOR 1
+#define LEFT_MOTOR 1
+#define RIGHT_MOTOR 2
 #define PROPORTIONAL 7
 #define DERIVATIVE 6
+#define LEFT_FWD_COLLISION 7
+#define RIGHT_FWD_COLLISION 8
 
 int lthresh = 30; //Threshold before left QRD detects paper 
 int rthresh = 30; //Threshold before right QRD detects paper
@@ -47,7 +49,7 @@ double m = 0; //#Clock oulses in current state, relating to error
 double d; //PID Derivative. m = y/x = (error-lasterr)/(q+m)
 double p; //PID Proportional. 
 double con; //Control Applied = kd*d + kp*p;
-double vel = 40; // Current to motor
+double vel = 60; // Current to motor
 int c = 0; //Counter
 int t = 0; //Counter
 
@@ -167,8 +169,8 @@ void r_followTape(){
      }
    c=c+1;
    m=m+1;
-   motor.speed(LEFT_MOTOR,-(vel-con)); //left
-   motor.speed(RIGHT_MOTOR,-(vel+con)); //right
+   motor.speed(RIGHT_MOTOR,-(vel-con)); //left
+   motor.speed(LEFT_MOTOR,-(vel+con)); //right
    lasterr=error;
 }
 
@@ -239,7 +241,7 @@ void turn(char dir){
       while(R < rthresh){;
         R = analogRead(RIGHT_TAPE);
       }
-      motor.stop_all();
+      //motor.stop_all();
       error = 0; //Reset PID
       lasterr = 0;
    } 
@@ -251,14 +253,14 @@ void turn(char dir){
       while(L < lthresh){
           L = analogRead(LEFT_TAPE);
       }
-      motor.stop_all();   
+      //motor.stop_all();   
       error = 0; //Reset PID
       lasterr = 0;
    } 
    else{
-      motor.speed(LEFT_MOTOR,20-con); //left
-      motor.speed(RIGHT_MOTOR,20+con); //right
-      delay(180); //Just pass the intersection
+      motor.speed(LEFT_MOTOR,vel-con); //left
+      motor.speed(RIGHT_MOTOR,vel+con); //right
+      delay(300); //Just pass the intersection
    }
 }
 
@@ -300,4 +302,12 @@ void wide_turn(char dir){
       //motor.speed(RIGHT_MOTOR,20+con); //right
       //delay(180); //Just pass the intersection
    }
+}
+
+bool detectCollision(){
+  bool output = false;
+  int left = digitalRead(LEFT_FWD_COLLISION); 
+  int right = digitalRead(RIGHT_FWD_COLLISION); 
+  if(left == LOW || right == LOW) {output = true;}
+  return output;
 }
