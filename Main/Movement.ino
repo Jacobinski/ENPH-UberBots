@@ -90,10 +90,6 @@ void followTape(){
      {
          LCD.clear();
          LCD.setCursor(0,0);
-         //LCD.print("kp:");
-         //LCD.print(kp);
-         //LCD.print(" kd:");
-         //LCD.print(kd);
          LCD.print("lm:");
          LCD.print(analogRead(5));
          LCD.print("rm:");
@@ -121,11 +117,13 @@ void followTape(){
   Function: detectIntersection
 
   Description:
-  This function returns if an intersection was detected. It does not
-  specify if the intersection is left or right.
+  This function returns if an intersection was detected. The direction
+  of the intersection to be detected is passed to this function.
 
   Code Inputs:
-    * None
+    * dir: Character corresponding to which side QRD must detect
+           the intersection. If F (forward) is passed to this function,
+           it will return true if EITHER of the QRDs detect something
   Code Outputs:
     * Boolean value if interesection detected.
   TINAH Inputs:
@@ -133,14 +131,21 @@ void followTape(){
     * digital 1: Right QRD intersection
 
 */
-bool detectIntersection(){
+bool detectIntersection(char dir){
 
   bool output = false;
   int left = analogRead(0);
   int right = analogRead(1);
 
-  if(left > 30|| right > 30)
-    output = true;
+  if (dir == LEFT){
+    if (left > lthresh) output = true;
+  }
+  else if (dir == RIGHT){
+    if (right > rthresh) output = true;
+  }
+  else if (dir == FORWARD){
+    if (left > lthresh || right > rthresh) output = true;
+  }
 
   return output;
 }
@@ -151,7 +156,7 @@ bool detectIntersection(){
 
   Description:
   Rotates the robot corresponding to the turn direction given to the 
-  function. 
+  function. This occurs by moving the wheels in opposite directions.
 
   Code Inputs:
     * Direction: (char) LEFT, RIGHT, FOWARD
@@ -164,20 +169,18 @@ bool detectIntersection(){
 */
 void turn(char dir){
 
-   Serial.print("Turning ");
-   Serial.println(dir);
    int Lm = 0; //Left middle QRD Signal
    int Rm = 0; //Right middle QRD Signal
+
+   // Begin by going past the intersection. 
+   // This will give us space to make a wider turn.
 
    if (dir == LEFT){
       delay(150); //Overshoot
       motor.speed(2,-50); //left
       motor.speed(3,50); //right
       delay(500);
-      while(Rm < rthresh){
-        //LCD.clear();
-        //LCD.home();
-        //LCD.print("Left");
+      while(Rm < rthresh){;
         Rm = analogRead(3);
       }
       motor.stop_all();
@@ -190,9 +193,6 @@ void turn(char dir){
       motor.speed(3,-50); //right
       delay(500); //Pause for 0.5s
       while(Lm < lthresh){
-        //LCD.clear();
-        //LCD.home();
-        //LCD.print("Right");
           Lm = analogRead(5);
       }
       motor.stop_all();

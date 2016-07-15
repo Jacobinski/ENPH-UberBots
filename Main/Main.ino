@@ -15,59 +15,46 @@
 
 bool passenger; // Passenger carrying status
 char turnDir; // The direction of the next turn
-char dir;    char* dir_p; // Direction, N,S,E,W
-int pN;      int* pN_p; // Holds the previous node (pN) in memory
-int cN;      int* cN_p; // Holds the current node (cN) in memory
+char dir;  char* dir_p; // Direction, N,S,E,W
+int cN;    int* cN_p; // Holds the current node (cN) in memory
 QueueList <int> fN; // Holds all of the future nodes (fN) in memory
 
-//Prototype to fix errors
+//Prototypes for functions the complier misses
 StackList<int> pathFind(int start, int finish, int collision);
 void enableExternalInterrupt(unsigned int INTX, unsigned int mode);
 
 void setup() {
   #include <phys253setup.txt>
-  Serial.begin(9600);
+  enableExternalInterrupt(INT1,LOW);
   passenger = false;
+  turnDir = UNDEFINED;
   dir = SOUTH; dir_p = &dir;
-  cN = 19; cN_p = &cN;
-  pN = 1; pN_p = &pN; //This initial value does not matter
-  Serial.println("Start code");
+  cN = 19; cN_p = &cN; // Initial value of current position. Defined as the node the vehicle is approaching.
   StackList <int> path = pathFind(19,7,999); 
   while(!path.isEmpty()){
     fN.push(path.pop()); //path only exists in setup() [bug?]. This is a fix
   }
-  enableExternalInterrupt(INT1,LOW);
-  delay(200);
+  Serial.begin(9600); Serial.println("Start code");
 }
 
 void loop() {
-  /*
- while(!fN.isEmpty()){
-  	Serial.println(fN.pop());
-    }
-  delay(1000000);
-  */
-  bool intersection = detectIntersection();
-  if (!fN.isEmpty()){
-    if (intersection == true){
-      turnDir = turnDirection(cN_p,fN.pop(),dir_p);
-      Serial.println("Intersection Detected");
-      LCD.clear();
-      LCD.home();
-      LCD.print(turnDir);
-      turn(turnDir);
-      //followTape();
+  while(!fN.isEmpty()){
+  	if (turnDir == UNDEFINED) {
+  		turnDir = turnDirection(cN,fN.peek(),dir); //Get next turn direction
+  	}
+    if (detectIntersection(turnDir)){ // See if we need to turn
+      updateParameters(cN_p, fN.pop(), dir_p); // Account for the new position at the intersection.
+      turn(turnDir); 
+      turnDir = UNDEFINED; // Clear the turn direction
     }
     else{
-      Serial.println("Following Tape");
       followTape();
     }
   }
-  else{
+  // Once the motor has run out of commands
     motor.stop_all();
     LCD.clear();
     LCD.home();
     LCD.print("Done");
     delay(10000);
-  }
 }
