@@ -28,6 +28,7 @@
 #define RIGHT 'R'
 #define LEFT 'L'
 #define FORWARD 'F'
+#define BACKWARD 'B'
 #define UNDEFINED 'U'
 
 const int nodeDistance[NODES][NODES] = //Non-zero values are valid connections (cm)
@@ -132,8 +133,20 @@ char getDirection(int cN, int fN){
   return dir;
 }
 
-// This is the counterpart to getDirection. Given a node and a compass direction,
-// this function returns the node in that direction
+/*
+  Function: getNode
+
+  Description:
+  Takes inputs of an intersection node, and a direction. Will return
+  the node that is attached in that direction, or 999 to indicate
+  no connection exists.
+
+  Code Inputs:
+    * cN: (Int) Current node of the robot
+    * dir: (char) The direction of the robot
+  Code Outputs:
+    * output: (int) The node in that direction, of 999 to indicate no node.
+*/
 int getNode(int cN, char dir){
 
   int output = 999; // This should be 1 to 20. This is the error value
@@ -141,7 +154,6 @@ int getNode(int cN, char dir){
     if (nodeDirections[cN][i-1] == dir) output = i;
   }
   return output;
-
 }
 
 /*
