@@ -11,6 +11,7 @@
 #define RIGHT 'R'
 #define LEFT 'L'
 #define FORWARD 'F'
+#define BACKWARD 'B'
 #define UNDEFINED 'U'
 
 bool passenger; // Passenger carrying status
@@ -57,7 +58,7 @@ void loop() {
   while(!detectCollision()){
     followTape();
   }
-  turnAround();
+  turn();
   while(!detectCollision()){
     followTape();
   }
