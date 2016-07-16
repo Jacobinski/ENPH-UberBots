@@ -161,15 +161,15 @@ int getNode(int cN, char dir){
 
   Description:
   This function returns the direction to move turn the robot from the
-  current node to the future node.
-  The output will either be forward, left, right (F,L,R).
+  current node to the future node. This output will either be FORWARD,
+  BACKWARD, LEFT, or RIGHT (F,B,L,R).
 
   Code Inputs:
     * cN: The current node 
     * fN: The future node
     * dir: The current direction of the robot
   Code Outputs:
-    * Character (F,L,R)
+    * direction : F,B,L,R
 */
 char turnDirection(int cN, int fN, char dir){
 
@@ -180,15 +180,19 @@ char turnDirection(int cN, int fN, char dir){
   if (p == NORTH && n == NORTH)  {turn = FORWARD;}
   if (p == NORTH && n == EAST)   {turn = RIGHT;}
   if (p == NORTH && n == WEST)   {turn = LEFT;}
+  if (p == NORTH && n == SOUTH)  {turn = BACKWARD;}
   if (p == SOUTH && n == SOUTH)  {turn = FORWARD;}
   if (p == SOUTH && n == EAST)   {turn = LEFT;}
   if (p == SOUTH && n == WEST)   {turn = RIGHT;}
+  if (p == SOUTH && n == NORTH)  {turn = BACKWARD;}
   if (p == WEST && n == NORTH)   {turn = RIGHT;}
   if (p == WEST && n == SOUTH)   {turn = LEFT;}
   if (p == WEST && n == WEST)    {turn = FORWARD;}
+  if (p == WEST && n == EAST)    {turn = BACKWARD;}
   if (p == EAST && n == NORTH)   {turn = LEFT;}
   if (p == EAST && n == SOUTH)   {turn = RIGHT;}
   if (p == EAST && n == EAST)    {turn = FORWARD;}
+  if (p == EAST && n == WEST)    {turn = BACKWARD;}
 
   return turn;
 }
