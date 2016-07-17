@@ -263,9 +263,19 @@ StackList<int> pathFind(int start, int finish, char direction){
   int distance[20][20]; 
   for(int a=0;a<20,a++){for(b=0;b<20;b++){distance[a][b]=nodeDistance[a][b];}} //Copy nodeDistance to clean array
   for(int c=0;c<20;c++){check[c]=false;dist[c]=999;prev[c]=999;} //Assign above array values
-  
+
   dist[cN-1] = 0; // Initialize the distance from start -> start = 0
   check[cN-1] = true; // Starting node is checked
+
+  //Set the reverse direction to be a last case scenario by modifying distance[][]
+  char rev = UNDEFINED;
+  if (direction == NORTH) {rev = SOUTH;}
+  if (direction == SOUTH) {rev = NORTH;}
+  if (direction == EAST) {rev = WEST;}
+  if (direction == WEST) {rev = EAST;}
+  int nxt = getNode(start,rev);
+  distance[start][nxt] = 9999; // Bigger than the sum of all other distances -> last resort path 
+  
   
   while (done != true){
     // Obtain lengths from current node to adjacent nodes -> replace distance if smaller than current value.
