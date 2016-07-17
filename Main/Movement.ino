@@ -211,20 +211,14 @@ void turn(char dir){
       motor.speed(RIGHT_MOTOR,vel+con); //right
       delay(300); //Just pass the intersection
    }
-}
+   else if (dir == BACKWARD){
+      int i = 0; // Turn counter
+      int V = 60; // Velocity for turn
+      int ti; 
+      int tf; 
+      int turnTime = 600; //ms
+      bool stopTurn = false;
 
-void turnAround(){
-
-  int Lm = 0; // Left middle QRD
-  int Rm = 0; // Right middle QRD
-  int i = 0; // Turn counter
-  int V = 60; // Velocity for turn
-  int ti; 
-  int tf; 
-  int turnTime = 600; //ms
-  bool stopTurn = false;
-
-  if (true == true){ // We will determine direction with this eventually
       motor.speed(LEFT_MOTOR,-V);
       motor.speed(RIGHT_MOTOR,-V/2);
       delay(1000); //Reverse for 0.3 sec
@@ -251,7 +245,7 @@ void turnAround(){
         }
         i = i + 1;
       }
-  }
+   }
 }
 
 /*

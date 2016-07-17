@@ -54,30 +54,6 @@ const int nodeDistance[NODES][NODES] = //Non-zero values are valid connections (
   {0,0,0,0,0,0,0,0,0,0,0,0,115,0,0,0,0,99,0,87}, // Node 19
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,87,0}  // Node 20
 };
-const char validDirections[NODES][DIRECTIONS] =
-{
-  //NORTH, EAST, SOUTH, WEST
-  {'U','U','S','U'}, // Node 1
-  {'N','E','S','U'}, // Node 2
-  {'N','E','U','U'}, // Node 3
-  {'N','E','U','W'}, // Node 4
-  {'N','E','S','W'}, // Node 5
-  {'N','U','S','W'}, // Node 6
-  {'U','E','U','U'}, // Node 7
-  {'U','U','S','U'}, // Node 8
-  {'N','U','S','W'}, // Node 9
-  {'N','E','U','W'}, // Node 10
-  {'U','U','S','U'}, // Node 11
-  {'N','E','S','U'}, // Node 12
-  {'N','E','S','W'}, // Node 13
-  {'N','E','S','U'}, // Node 14
-  {'U','U','S','U'}, // Node 15
-  {'U','U','U','W'}, // Node 16
-  {'N','E','U','W'}, // Node 17
-  {'N','U','U','W'}, // Node 18
-  {'N','U','S','W'}, // Node 19
-  {'U','U','S','U'}  // Node 20
-};
 const char nodeDirections[NODES][NODES] = //Defined from edges LEAVING the [x][] position
 {  
   {'U','S','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U'}, // Node 1
@@ -275,8 +251,7 @@ StackList<int> pathFind(int start, int finish, char direction){
   if (direction == WEST) {rev = EAST;}
   int nxt = getNode(start,rev);
   distance[start][nxt] = 9999; // Bigger than the sum of all other distances -> last resort path 
-  
-  
+    
   while (done != true){
     // Obtain lengths from current node to adjacent nodes -> replace distance if smaller than current value.
     for(int i = 1; i <= NODES; i++){ 
