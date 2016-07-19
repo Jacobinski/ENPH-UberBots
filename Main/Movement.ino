@@ -28,16 +28,16 @@
 #define LEFT 'L'
 #define FORWARD 'F'
 #define UNDEFINED 'U'
-#define LEFT_INTERSECTION 0
+#define LEFT_INTERSECTION 4
 #define RIGHT_INTERSECTION 1
 #define LEFT_TAPE 5
-#define RIGHT_TAPE 3
-#define LEFT_MOTOR 1
-#define RIGHT_MOTOR 2
+#define RIGHT_TAPE 0
+#define LEFT_MOTOR 0
+#define RIGHT_MOTOR 1
 #define PROPORTIONAL 7
 #define DERIVATIVE 6
-#define LEFT_FWD_COLLISION 7
-#define RIGHT_FWD_COLLISION 8
+#define LEFT_FWD_COLLISION 4
+#define RIGHT_FWD_COLLISION 7
 
 int lthresh = 30; //Threshold before left QRD detects paper 
 int rthresh = 30; //Threshold before right QRD detects paper
@@ -96,29 +96,29 @@ void followTape(){
    d=(int)((float)kd*(float)(error-recerr)/(float)(q+m));
    con = p+d;
 
-   if (c==10)
+   /*if (c==10)
      {
          LCD.clear();
          LCD.setCursor(0,0);
          LCD.print("lm:");
-         LCD.print(analogRead(5));
+         LCD.print(analogRead(LEFT_TAPE));
          LCD.print("rm:");
-         LCD.print(analogRead(3)); 
+         LCD.print(analogRead(RIGHT_TAPE)); 
          LCD.print("kd:");
          LCD.print(kd); 
          LCD.setCursor(0,1);
          LCD.print("li:");
-         LCD.print(analogRead(0));
+         LCD.print(analogRead(LEFT_INTERSECTION));
          LCD.print("ri:");
-         LCD.print(analogRead(1));
+         LCD.print(analogRead(RIGHT_INTERSECTION));
           LCD.print("kp:");
          LCD.print(kp); 
          c=0;
      }
-   c=c+1;
+   c=c+1;*/
    m=m+1;
-   motor.speed(LEFT_MOTOR,vel-con); //left
-   motor.speed(RIGHT_MOTOR,vel+con); //right
+   motor.speed(LEFT_MOTOR,vel+con); //left
+   motor.speed(RIGHT_MOTOR,vel-con); //right
    lasterr=error;
 }
 
@@ -186,30 +186,27 @@ void turn(char dir){
       delay(150); //Overshoot
       motor.speed(LEFT_MOTOR,-50); //left
       motor.speed(RIGHT_MOTOR,50); //right
-      delay(500);
-      while(R < rthresh){;
-        R = analogRead(RIGHT_TAPE);
+      delay(700);
+      while(L < lthresh){;
+        L = analogRead(LEFT_TAPE);
       }
-      //motor.stop_all();
-      error = 0; //Reset PID
-      lasterr = 0;
+      lasterr = 0; //Reset PID
    } 
    else if (dir == RIGHT){
       delay(150); //Overshoot
       motor.speed(LEFT_MOTOR,50); //left
       motor.speed(RIGHT_MOTOR,-50); //right
-      delay(500); //Pause for 0.5s
-      while(L < lthresh){
-          L = analogRead(LEFT_TAPE);
+      delay(700); //Pause for 0.5s
+      while(R < rthresh){
+          R = analogRead(RIGHT_TAPE);
       }
       //motor.stop_all();   
-      error = 0; //Reset PID
-      lasterr = 0;
+      lasterr = 0; //Reset PID
    } 
    else if (dir == FORWARD){
-      motor.speed(LEFT_MOTOR,vel-con); //left
-      motor.speed(RIGHT_MOTOR,vel+con); //right
-      delay(300); //Just pass the intersection
+      motor.speed(LEFT_MOTOR,vel+con); //left
+      motor.speed(RIGHT_MOTOR,vel-con); //right
+      delay(200); //Just pass the intersection
    }
    else if (dir == BACKWARD){
       int i = 0; // Turn counter
@@ -245,6 +242,9 @@ void turn(char dir){
         }
         i = i + 1;
       }
+      motor.speed(LEFT_MOTOR,0);
+      motor.speed(RIGHT_MOTOR,0);
+      lasterr = 5; //Set PID to compensate
    }
 }
 

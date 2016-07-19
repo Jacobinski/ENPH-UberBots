@@ -1,3 +1,8 @@
+#define LEFT_INTERSECTION 4
+#define RIGHT_INTERSECTION 1
+#define LEFT_TAPE 5
+#define RIGHT_TAPE 0
+
 /*  Enables an external interrupt pin
 INTX: Which interrupt should be configured?
     INT0    - will trigger ISR(INT0_vect)
@@ -42,16 +47,16 @@ ISR(INT1_vect)
          LCD.clear();
          LCD.setCursor(0,0);
          LCD.print("lm:");
-         LCD.print(analogRead(5));
+         LCD.print(analogRead(LEFT_TAPE));
          LCD.print("rm:");
-         LCD.print(analogRead(3)); 
+         LCD.print(analogRead(RIGHT_TAPE)); 
          LCD.print("kd:");
          LCD.print(knob(6)/4); 
          LCD.setCursor(0,1);
          LCD.print("li:");
-         LCD.print(analogRead(0));
+         LCD.print(analogRead(LEFT_INTERSECTION));
          LCD.print("ri:");
-         LCD.print(analogRead(1));
+         LCD.print(analogRead(RIGHT_INTERSECTION));
          LCD.print("kp:");
          LCD.print(knob(7)/4);
       t = 0;
