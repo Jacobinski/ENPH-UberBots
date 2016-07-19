@@ -28,9 +28,10 @@
 #define RIGHT 'R'
 #define LEFT 'L'
 #define FORWARD 'F'
+#define BACKWARD 'B'
 #define UNDEFINED 'U'
 
-const int distance[NODES][NODES] = //Non-zero values are valid connections (cm)
+const int nodeDistance[NODES][NODES] = //Non-zero values are valid connections (cm)
 {  
   {0,87,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 1
   {87,0,99,0,115,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 2
@@ -52,30 +53,6 @@ const int distance[NODES][NODES] = //Non-zero values are valid connections (cm)
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,132,0,99,0}, // Node 18
   {0,0,0,0,0,0,0,0,0,0,0,0,115,0,0,0,0,99,0,87}, // Node 19
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,87,0}  // Node 20
-};
-const char validDirections[NODES][DIRECTIONS] =
-{
-  //NORTH, EAST, SOUTH, WEST
-  {'U','U','S','U'}, // Node 1
-  {'N','E','S','U'}, // Node 2
-  {'N','E','U','U'}, // Node 3
-  {'N','E','U','W'}, // Node 4
-  {'N','E','S','W'}, // Node 5
-  {'N','U','S','W'}, // Node 6
-  {'U','E','U','U'}, // Node 7
-  {'U','U','S','U'}, // Node 8
-  {'N','U','S','W'}, // Node 9
-  {'N','E','U','W'}, // Node 10
-  {'U','U','S','U'}, // Node 11
-  {'N','E','S','U'}, // Node 12
-  {'N','E','S','W'}, // Node 13
-  {'N','E','S','U'}, // Node 14
-  {'U','U','S','U'}, // Node 15
-  {'U','U','U','W'}, // Node 16
-  {'N','E','U','W'}, // Node 17
-  {'N','U','U','W'}, // Node 18
-  {'N','U','S','W'}, // Node 19
-  {'U','U','S','U'}  // Node 20
 };
 const char nodeDirections[NODES][NODES] = //Defined from edges LEAVING the [x][] position
 {  
@@ -105,7 +82,7 @@ const char nodeDirections[NODES][NODES] = //Defined from edges LEAVING the [x][]
   Function: getDirection
 
   Description:
-  Returns the direction to given the current node (cN) and the
+  Returns the direction given the current node (cN) and the
   next node (nN). If no values are given returns a value of U to
   signfify an undefined output 
 
@@ -133,19 +110,42 @@ char getDirection(int cN, int fN){
 }
 
 /*
+  Function: getNode
+
+  Description:
+  Takes inputs of an intersection node, and a direction. Will return
+  the node that is attached in that direction, or 999 to indicate
+  no connection exists.
+
+  Code Inputs:
+    * cN: (Int) Current node of the robot
+    * dir: (char) The direction of the robot
+  Code Outputs:
+    * output: (int) The node in that direction, of 999 to indicate no node.
+*/
+int getNode(int cN, char dir){
+
+  int output = 999; // This should be 1 to 20. This is the error value
+  for (int i=1;i<=NODES; i++){
+    if (nodeDirections[cN][i-1] == dir) output = i;
+  }
+  return output;
+}
+
+/*
   Function: turnDirection
 
   Description:
   This function returns the direction to move turn the robot from the
-  current node to the future node.
-  The output will either be forward, left, right (F,L,R).
+  current node to the future node. This output will either be FORWARD,
+  BACKWARD, LEFT, or RIGHT (F,B,L,R).
 
   Code Inputs:
     * cN: The current node 
     * fN: The future node
     * dir: The current direction of the robot
   Code Outputs:
-    * Character (F,L,R)
+    * direction : F,B,L,R
 */
 char turnDirection(int cN, int fN, char dir){
 
@@ -156,15 +156,19 @@ char turnDirection(int cN, int fN, char dir){
   if (p == NORTH && n == NORTH)  {turn = FORWARD;}
   if (p == NORTH && n == EAST)   {turn = RIGHT;}
   if (p == NORTH && n == WEST)   {turn = LEFT;}
+  if (p == NORTH && n == SOUTH)  {turn = BACKWARD;}
   if (p == SOUTH && n == SOUTH)  {turn = FORWARD;}
   if (p == SOUTH && n == EAST)   {turn = LEFT;}
   if (p == SOUTH && n == WEST)   {turn = RIGHT;}
+  if (p == SOUTH && n == NORTH)  {turn = BACKWARD;}
   if (p == WEST && n == NORTH)   {turn = RIGHT;}
   if (p == WEST && n == SOUTH)   {turn = LEFT;}
   if (p == WEST && n == WEST)    {turn = FORWARD;}
+  if (p == WEST && n == EAST)    {turn = BACKWARD;}
   if (p == EAST && n == NORTH)   {turn = LEFT;}
   if (p == EAST && n == SOUTH)   {turn = RIGHT;}
   if (p == EAST && n == EAST)    {turn = FORWARD;}
+  if (p == EAST && n == WEST)    {turn = BACKWARD;}
 
   return turn;
 }
@@ -186,10 +190,10 @@ char turnDirection(int cN, int fN, char dir){
     * None
 */
 void updateParameters(int *cN, int fN, char *dir){
-    /* The circle causes problems for directions. Going from node 9 to node
-   12 starts off south, then moves north. To get the final direction, figure
-   out what direction the robot will approach the new node. This is done
-   by finding the opposite direction of future towards current.*/
+  //The circle causes problems for directions. Going from node 9 to node
+  //12 starts off south, then moves north. To get the final direction, figure
+  //out what direction the robot will approach the new node. This is done
+  //by finding the opposite direction of future towards current.
   char od = getDirection(fN,*cN); // opposite direction 
   char nd = UNDEFINED; // new direction
   if (od == NORTH) {nd = SOUTH;}
@@ -200,7 +204,24 @@ void updateParameters(int *cN, int fN, char *dir){
   *cN = fN; // Change the current node to the future node.
 }
 
-StackList<int> pathFind(int start, int finish, int collision){
+/*
+  Function: pathFind
+
+  Description:
+  This function will find the shortest distance by using the Dijkstra
+  algorithm. It will use the distance[][] array above for determining
+  distances. It will avoid reversing by considering the current 
+  direction of the robot. 
+
+  Code Inputs:
+    * start: The current node of the robot (node that the robot is approaching)
+    * finish: The desired final node of the robot.
+    * direction: The current direction of the robot
+  Code Outputs:
+    * StackList: A stack of future commands. The first to be executed will be 
+                 on top of the stack.
+*/
+StackList<int> pathFind(int start, int finish, char direction){
   // The collision will be set to 0 if no collision, or the node value
   // where a collision was detected, allowing no link to be made between
   // cN and collisionNode for a direct path.  
@@ -215,11 +236,22 @@ StackList<int> pathFind(int start, int finish, int collision){
   bool check[20]; // Nodes already checked
   int dist[20]; // Distances from start to each node
   int prev[20]; // Best connection to previous node
-  for (int c=0;c<20; c++){check[c]=false;dist[c]=999;prev[c]=999;}
-  
+  int distance[20][20]; 
+  for(int a=0;a<20,a++){for(b=0;b<20;b++){distance[a][b]=nodeDistance[a][b];}} //Copy nodeDistance to clean array
+  for(int c=0;c<20;c++){check[c]=false;dist[c]=999;prev[c]=999;} //Assign above array values
+
   dist[cN-1] = 0; // Initialize the distance from start -> start = 0
   check[cN-1] = true; // Starting node is checked
-  
+
+  //Set the reverse direction to be a last case scenario by modifying distance[][]
+  char rev = UNDEFINED;
+  if (direction == NORTH) {rev = SOUTH;}
+  if (direction == SOUTH) {rev = NORTH;}
+  if (direction == EAST) {rev = WEST;}
+  if (direction == WEST) {rev = EAST;}
+  int nxt = getNode(start,rev);
+  distance[start][nxt] = 9999; // Bigger than the sum of all other distances -> last resort path 
+    
   while (done != true){
     // Obtain lengths from current node to adjacent nodes -> replace distance if smaller than current value.
     for(int i = 1; i <= NODES; i++){ 
@@ -228,10 +260,6 @@ StackList<int> pathFind(int start, int finish, int collision){
           dist[i-1] = dist[cN-1] + len;
           prev[i-1] = cN; 
       }
-      //Serial.print("Loop #"); Serial.println(i);
-      //for (int a = 0; a<20; a++){Serial.print(dist[a]); Serial.print(" ");} Serial.println();
-      //for (int a = 0; a<20; a++){Serial.print(prev[a]); Serial.print(" ");} Serial.println();
-      //for (int a = 0; a<20; a++){Serial.print(check[a]); Serial.print(" ");} Serial.println();
     }
     // Find the next minimum node length. If this it the final node, end the algorithm.
     int nextNode;
@@ -262,6 +290,3 @@ StackList<int> pathFind(int start, int finish, int collision){
   }
   return output;
 }
-
-
-

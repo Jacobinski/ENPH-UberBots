@@ -167,7 +167,7 @@ bool detectIntersection(char dir){
   function. This occurs by moving the wheels in opposite directions.
 
   Code Inputs:
-    * Direction: (char) LEFT, RIGHT, FOWARD
+    * Direction: (char) LEFT, RIGHT, FOWARD, BACKWARD
   Code Outputs:
     * None
   TINAH Inputs:
@@ -206,25 +206,19 @@ void turn(char dir){
       error = 0; //Reset PID
       lasterr = 0;
    } 
-   else{
+   else if (dir == FORWARD){
       motor.speed(LEFT_MOTOR,vel-con); //left
       motor.speed(RIGHT_MOTOR,vel+con); //right
       delay(300); //Just pass the intersection
    }
-}
+   else if (dir == BACKWARD){
+      int i = 0; // Turn counter
+      int V = 60; // Velocity for turn
+      int ti; 
+      int tf; 
+      int turnTime = 600; //ms
+      bool stopTurn = false;
 
-void turnAround(){
-
-  int Lm = 0; // Left middle QRD
-  int Rm = 0; // Right middle QRD
-  int i = 0; // Turn counter
-  int V = 60; // Velocity for turn
-  int ti; 
-  int tf; 
-  int turnTime = 600; //ms
-  bool stopTurn = false;
-
-  if (true == true){ // We will determine direction with this eventually
       motor.speed(LEFT_MOTOR,-V);
       motor.speed(RIGHT_MOTOR,-V/2);
       delay(1000); //Reverse for 0.3 sec
@@ -251,7 +245,7 @@ void turnAround(){
         }
         i = i + 1;
       }
-  }
+   }
 }
 
 /*

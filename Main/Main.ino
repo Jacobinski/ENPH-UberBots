@@ -11,6 +11,7 @@
 #define RIGHT 'R'
 #define LEFT 'L'
 #define FORWARD 'F'
+#define BACKWARD 'B'
 #define UNDEFINED 'U'
 
 bool passenger; // Passenger carrying status
@@ -30,7 +31,7 @@ void setup() {
   turnDir = UNDEFINED;
   dir = NORTH; dir_p = &dir;
   cN = 19; cN_p = &cN; // Initial value of current position. Defined as the node the vehicle is approaching.
-  StackList <int> path = pathFind(19,1,999); 
+  StackList <int> path = pathFind(19,1,dir); 
   while(!path.isEmpty()){
     fN.push(path.pop()); //path only exists in setup() [bug?]. This is a fix
   }
@@ -57,7 +58,7 @@ void loop() {
   while(!detectCollision()){
     followTape();
   }
-  turnAround();
+  turn();
   while(!detectCollision()){
     followTape();
   }
