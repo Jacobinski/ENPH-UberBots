@@ -186,7 +186,7 @@ void turn(char dir){
       delay(150); //Overshoot
       motor.speed(LEFT_MOTOR,-50); //left
       motor.speed(RIGHT_MOTOR,50); //right
-      delay(500);
+      delay(700);
       while(L < lthresh){;
         L = analogRead(LEFT_TAPE);
       }
@@ -196,7 +196,7 @@ void turn(char dir){
       delay(150); //Overshoot
       motor.speed(LEFT_MOTOR,50); //left
       motor.speed(RIGHT_MOTOR,-50); //right
-      delay(500); //Pause for 0.5s
+      delay(700); //Pause for 0.5s
       while(R < rthresh){
           R = analogRead(RIGHT_TAPE);
       }
@@ -206,7 +206,7 @@ void turn(char dir){
    else if (dir == FORWARD){
       motor.speed(LEFT_MOTOR,vel+con); //left
       motor.speed(RIGHT_MOTOR,vel-con); //right
-      delay(300); //Just pass the intersection
+      delay(200); //Just pass the intersection
    }
    else if (dir == BACKWARD){
       int i = 0; // Turn counter
@@ -218,7 +218,7 @@ void turn(char dir){
 
       motor.speed(LEFT_MOTOR,-V);
       motor.speed(RIGHT_MOTOR,-V/2);
-      delay(500); //Reverse for 0.3 sec
+      delay(1000); //Reverse for 0.3 sec
       //MAYBE OVERSHOOT TO SEE IF NEAR AN INTERSECTION, THEN PULL FORWARD AND DO THE TURN
       while(stopTurn == false){
         if(i % 2 == 1){

@@ -250,11 +250,6 @@ StackList<int> pathFind(int start, int finish, char direction){
   if (direction == EAST) {rev = WEST;}
   if (direction == WEST) {rev = EAST;}
   int bck = getNode(start,rev);
-  LCD.clear();
-  LCD.home();
-  LCD.print("Backwards=");
-  LCD.print(bck);
-  delay(4000);
   distance[start-1][bck-1] = 9999; // Bigger than the sum of all other distances -> last resort path 
     
   while (done != true){

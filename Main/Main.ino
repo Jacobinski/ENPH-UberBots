@@ -14,7 +14,7 @@
 #define BACKWARD 'B'
 #define UNDEFINED 'U'
 
-int c; // Counter
+int counter; // Counter
 int finish; // ending location
 bool passenger; // Passenger carrying status
 char turnDir; // The direction of the next turn
@@ -37,7 +37,7 @@ void setup() {
   enableExternalInterrupt(INT1,LOW);
   passenger = false;
   turnDir = UNDEFINED;
-  c = 0;
+  counter = 0;
   finish = 1;
   dir = NORTH; dir_p = &dir;
   cN = 19; cN_p = &cN; // Initial value of current position. Defined as the node the vehicle is approaching.
@@ -61,6 +61,7 @@ void loop() {
        if (cD == WEST) {dir = EAST;}
        int nxt = getNode(cN,dir);
        updateParameters(cN_p, nxt, dir_p);
+       turnDir = UNDEFINED; //Reset turn
        break; //Avoid the loop
     }
     //while (detectCollision()){motor.stop_all();delay(10000);}
@@ -71,8 +72,8 @@ void loop() {
     }
     else{
       followTape();
-      c = c + 1;
-      if (c == 20){
+      counter += 1;
+      if (counter == 20){
         LCD.clear();
         LCD.setCursor(0,0);
         LCD.print("cN:");
@@ -81,20 +82,14 @@ void loop() {
         LCD.print(fN.peek());
         LCD.setCursor(0,1);
         LCD.print("dir:");
-        LCD.print(dir)
+        LCD.print(dir);
         LCD.print(" turn:");
         LCD.print(turnDir);
+        counter = 0;
       }
     }
   }
     if (fN.isEmpty() && cN != finish){
-        LCD.clear();
-        LCD.setCursor(0,0);
-        LCD.print("cN ");
-        LCD.print(cN);
-        LCD.print(" dir ");
-        LCD.print(dir);
-        delay(4000);
         StackList <int> path = pathFind(cN,finish,dir); 
         while(!path.isEmpty()){
           LCD.clear();
