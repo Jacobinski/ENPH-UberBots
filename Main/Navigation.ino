@@ -26,15 +26,23 @@
 int counter; // Counter
 int checkpoint; // Checkpoints on the map that the robot wishes to reach
 bool passenger; // Passenger carrying status
+bool collision; // Collision flag
 char turnDir; // The direction of the next turn
 char dir;  char* dir_p; // Direction, N,S,E,W
 int cN;    int* cN_p; // Holds the current node (cN) in memory -> Node which robot is approaching
 QueueList <int> fN; // Holds all of the future nodes (fN) in memory
 
 const int checkpointNodes[6] = {2,5,13,19,17,4}; //Actually {1,5,13,20,17,4}
+const int path0 = {5};
+const int path1 = {9,10,12,13};
+const int path2 = {13,19};
+const int path3 = {18,17);
+const int path4 = {13,12,9,5,4};
+const int path5 = {3,2};
 
 void nav_init(){
   passenger = false;
+  collision = false;
   turnDir = UNDEFINED;
   counter = 0; // For display
   checkpoint = 4; 
@@ -61,12 +69,12 @@ void nav_init(){
 
 void navigate(){
   while(!fN.isEmpty()){
+    // Get next turn direction
     if (turnDir == UNDEFINED) {
       turnDir = turnDirection(cN,fN.peek(),dir); //Get next turn direction
     }
+    // Detect Collisions
     if (detectCollision()){
-       //int rev_node = cN;
-       //cN = fN.pop();
        while(!fN.isEmpty()) {fN.pop();} //Clear the fN list
        turn(BACKWARD);
        char cD = dir; //get current Direction
@@ -77,14 +85,16 @@ void navigate(){
        int nxt = getNode(cN,dir);
        updateParameters(cN_p, nxt, dir_p);
        turnDir = UNDEFINED; //Reset turn
+       collision = true;
        break; //Avoid the loop
     }
-    //while (detectCollision()){motor.stop_all();delay(10000);}
+    // Make decisions at intersection
     if (detectIntersection(turnDir)){ // See if we need to turn
       updateParameters(cN_p, fN.pop(), dir_p); // Account for the new position at the intersection.
       turn(turnDir); 
       turnDir = UNDEFINED; // Clear the turn direction
     }
+    // Default
     else{
       followTape();
       counter += 1;
@@ -104,17 +114,23 @@ void navigate(){
       }
     }
   }
-    if (fN.isEmpty()){  // Proceed to new checkpoint
+    if (fN.isEmpty()){  
         motor.stop(LEFT_MOTOR);
         motor.stop(RIGHT_MOTOR);
-        StackList <int> path = pathFind(cN,checkpointNodes[checkpoint],dir); 
-        while(!path.isEmpty()){
-          LCD.clear();
-          LCD.setCursor(0,0);
-          LCD.print(path.peek());
-          fN.push(path.pop());
-          delay(500);
-          } 
+        if (collision == true){
+          StackList <int> path = pathFind(cN,checkpointNodes[checkpoint],dir); 
+          while(!path.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(path.peek());fN.push(path.pop());delay(500);} 
+          collision = false;
+        }
+        else if (collision == false){
+          int d; // counter variable
+          if (checkpoint == 0){for(d = 0 ; d < sizeof(path0); d++){fN.push(path0[d]);}}
+          if (checkpoint == 1){for(d = 0 ; d < sizeof(path1); d++){fN.push(path1[d]);}}
+          if (checkpoint == 2){for(d = 0 ; d < sizeof(path2); d++){fN.push(path2[d]);}}
+          if (checkpoint == 3){for(d = 0 ; d < sizeof(path3); d++){fN.push(path3[d]);}}
+          if (checkpoint == 4){for(d = 0 ; d < sizeof(path4); d++){fN.push(path4[d]);}}
+          if (checkpoint == 5){for(d = 0 ; d < sizeof(path5); d++){fN.push(path5[d]);}}
+        }
         checkpoint = (checkpoint+1) % 6; // Cycle checkpoints
     }
     else{
