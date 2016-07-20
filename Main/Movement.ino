@@ -50,7 +50,6 @@ double d; //PID Derivative. m = y/x = (error-lasterr)/(q+m)
 double p; //PID Proportional. 
 double con; //Control Applied = kd*d + kp*p;
 double vel = 60; // Current to motor
-int c = 0; //Counter
 int t = 0; //Counter
 
 /*
@@ -95,27 +94,6 @@ void followTape(){
    p=kp*error;
    d=(int)((float)kd*(float)(error-recerr)/(float)(q+m));
    con = p+d;
-
-   /*if (c==10)
-     {
-         LCD.clear();
-         LCD.setCursor(0,0);
-         LCD.print("lm:");
-         LCD.print(analogRead(LEFT_TAPE));
-         LCD.print("rm:");
-         LCD.print(analogRead(RIGHT_TAPE)); 
-         LCD.print("kd:");
-         LCD.print(kd); 
-         LCD.setCursor(0,1);
-         LCD.print("li:");
-         LCD.print(analogRead(LEFT_INTERSECTION));
-         LCD.print("ri:");
-         LCD.print(analogRead(RIGHT_INTERSECTION));
-          LCD.print("kp:");
-         LCD.print(kp); 
-         c=0;
-     }
-   c=c+1;*/
    m=m+1;
    motor.speed(LEFT_MOTOR,vel+con); //left
    motor.speed(RIGHT_MOTOR,vel-con); //right

@@ -250,7 +250,7 @@ StackList<int> pathFind(int start, int finish, char direction){
   if (direction == EAST) {rev = WEST;}
   if (direction == WEST) {rev = EAST;}
   int bck = getNode(start,rev);
-  distance[start-1][bck-1] = 9999; // Bigger than the sum of all other distances -> last resort path 
+  distance[start-1][bck-1] = 0; // Can never go backwards 
     
   while (done != true){
     // Obtain lengths from current node to adjacent nodes -> replace distance if smaller than current value.

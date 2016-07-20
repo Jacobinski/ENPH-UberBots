@@ -23,7 +23,6 @@
 #define BACKWARD 'B'
 #define UNDEFINED 'U'
 
-int counter; // Counter
 int checkpoint; // Checkpoints on the map that the robot wishes to reach
 bool passenger; // Passenger carrying status
 bool collision; // Collision flag
@@ -44,7 +43,6 @@ void nav_init(){
   passenger = false;
   collision = false;
   turnDir = UNDEFINED;
-  counter = 0; // For display
   checkpoint = 4; 
   dir = SOUTH; dir_p = &dir;
   cN = 19; cN_p = &cN;
@@ -97,7 +95,7 @@ void navigate(){
     // Default
     else{
       followTape();
-      counter += 1;
+      int counter += 1;
       if (counter == 20){
         LCD.clear();
         LCD.setCursor(0,0);
@@ -115,14 +113,29 @@ void navigate(){
     }
   }
     if (fN.isEmpty()){  
+        //This is some hacky-stuff. If we're at an end-intersection, proceed forward until a collision
+       if (cN == 1 || cN == 7 || cN == 8 || cN == 11 || cN == 15 || cN == 16 || cN == 20){
+          while(!detectCollision()){followTape();}
+           turn(BACKWARD);
+           char cD = dir; //get current Direction
+           if (cD == NORTH) {dir = SOUTH;}
+           if (cD == SOUTH) {dir = NORTH;}
+           if (cD == EAST) {dir = WEST;}
+           if (cD == WEST) {dir = EAST;}
+           int nxt = getNode(cN,dir);
+           updateParameters(cN_p, nxt, dir_p);
+           turnDir = UNDEFINED; //Reset turn
+           collision = true;
+       }  
         motor.stop(LEFT_MOTOR);
         motor.stop(RIGHT_MOTOR);
         if (collision == true){
           StackList <int> path = pathFind(cN,checkpointNodes[checkpoint],dir); 
           while(!path.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(path.peek());fN.push(path.pop());delay(500);} 
-          collision = false;
+          collision = false; //NOTE: If path is empty, we will return to this fN.isEmpty() immediately, and move onto the next checkpoint in the below else if{}
         }
         else if (collision == false){
+          checkpoint = (checkpoint+1) % 6; // Cycle checkpoints
           int d; // counter variable
           if (checkpoint == 0){for(d = 0 ; d < sizeof(path0); d++){fN.push(path0[d]);}}
           if (checkpoint == 1){for(d = 0 ; d < sizeof(path1); d++){fN.push(path1[d]);}}
@@ -131,7 +144,6 @@ void navigate(){
           if (checkpoint == 4){for(d = 0 ; d < sizeof(path4); d++){fN.push(path4[d]);}}
           if (checkpoint == 5){for(d = 0 ; d < sizeof(path5); d++){fN.push(path5[d]);}}
         }
-        checkpoint = (checkpoint+1) % 6; // Cycle checkpoints
     }
     else{
       motor.stop_all();
