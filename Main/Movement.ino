@@ -183,7 +183,7 @@ void turn(char dir){
    // This will give us space to make a wider turn.
 
    if (dir == LEFT){
-      delay(150); //Overshoot
+      delay(250); //Overshoot
       motor.speed(LEFT_MOTOR,-50); //left
       motor.speed(RIGHT_MOTOR,50); //right
       delay(700);
@@ -193,7 +193,7 @@ void turn(char dir){
       lasterr = 0; //Reset PID
    } 
    else if (dir == RIGHT){
-      delay(150); //Overshoot
+      delay(250); //Overshoot
       motor.speed(LEFT_MOTOR,50); //left
       motor.speed(RIGHT_MOTOR,-50); //right
       delay(700); //Pause for 0.5s
