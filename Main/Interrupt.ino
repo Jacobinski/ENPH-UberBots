@@ -41,7 +41,8 @@ void disableExternalInterrupt(unsigned int INTX)
 ISR(INT1_vect)
 {
   int t;
-  motor.stop_all(); //stop motors
+  motor.speed(LEFT_MOTOR,0);//stop motors
+  motor.speed(RIGHT_MOTOR,0); 
   while(!stopbutton()){  //Stop button resumes operation
     if(t == 3600){
          LCD.clear();

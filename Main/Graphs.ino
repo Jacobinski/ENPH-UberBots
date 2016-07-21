@@ -32,11 +32,11 @@
 #define UNDEFINED 'U'
 
 const int nodeDistance[NODES][NODES] = //Non-zero values are valid connections (cm)
-{  
+{  //Note. We want to avoid 4->17. Make it longer thab 4-5-9-12-13-17 (length 418), but shorter than 4-3-2-5-9-12-13-19-18-17 (length 962)
   {0,87,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 1
   {87,0,99,0,115,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 2
   {0,99,0,132,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 3
-  {0,0,132,0,74,0,0,0,0,0,0,0,0,0,0,0,183,0,0,0}, // Node 4
+  {0,0,132,0,74,0,0,0,0,0,0,0,0,0,0,0,600,0,0,0}, // Node 4
   {0,115,0,74,0,66,0,0,65,0,0,0,0,0,0,0,0,0,0,0}, // Node 5
   {0,0,0,0,66,0,68,89,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 6
   {0,0,0,0,0,68,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 7
@@ -49,7 +49,7 @@ const int nodeDistance[NODES][NODES] = //Non-zero values are valid connections (
   {0,0,0,0,0,0,0,0,0,0,0,0,66,0,89,68,0,0,0,0}, // Node 14
   {0,0,0,0,0,0,0,0,0,0,0,0,0,89,0,0,0,0,0,0}, // Node 15
   {0,0,0,0,0,0,0,0,0,0,0,0,0,68,0,0,0,0,0,0}, // Node 16
-  {0,0,0,183,0,0,0,0,0,0,0,0,74,0,0,0,0,132,0,0}, // Node 17
+  {0,0,0,600,0,0,0,0,0,0,0,0,74,0,0,0,0,132,0,0}, // Node 17
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,132,0,99,0}, // Node 18
   {0,0,0,0,0,0,0,0,0,0,0,0,115,0,0,0,0,99,0,87}, // Node 19
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,87,0}  // Node 20
@@ -250,7 +250,7 @@ StackList<int> pathFind(int start, int finish, char direction){
   if (direction == EAST) {rev = WEST;}
   if (direction == WEST) {rev = EAST;}
   int bck = getNode(start,rev);
-  distance[start-1][bck-1] = 9999; // Bigger than the sum of all other distances -> last resort path 
+  distance[start-1][bck-1] = 0; // Can never go backwards 
     
   while (done != true){
     // Obtain lengths from current node to adjacent nodes -> replace distance if smaller than current value.

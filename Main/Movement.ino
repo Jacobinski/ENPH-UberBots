@@ -49,8 +49,7 @@ double m = 0; //#Clock oulses in current state, relating to error
 double d; //PID Derivative. m = y/x = (error-lasterr)/(q+m)
 double p; //PID Proportional. 
 double con; //Control Applied = kd*d + kp*p;
-double vel = 60; // Current to motor
-int c = 0; //Counter
+double vel = 70; // Current to motor
 int t = 0; //Counter
 
 /*
@@ -95,27 +94,6 @@ void followTape(){
    p=kp*error;
    d=(int)((float)kd*(float)(error-recerr)/(float)(q+m));
    con = p+d;
-
-   /*if (c==10)
-     {
-         LCD.clear();
-         LCD.setCursor(0,0);
-         LCD.print("lm:");
-         LCD.print(analogRead(LEFT_TAPE));
-         LCD.print("rm:");
-         LCD.print(analogRead(RIGHT_TAPE)); 
-         LCD.print("kd:");
-         LCD.print(kd); 
-         LCD.setCursor(0,1);
-         LCD.print("li:");
-         LCD.print(analogRead(LEFT_INTERSECTION));
-         LCD.print("ri:");
-         LCD.print(analogRead(RIGHT_INTERSECTION));
-          LCD.print("kp:");
-         LCD.print(kp); 
-         c=0;
-     }
-   c=c+1;*/
    m=m+1;
    motor.speed(LEFT_MOTOR,vel+con); //left
    motor.speed(RIGHT_MOTOR,vel-con); //right
@@ -183,20 +161,20 @@ void turn(char dir){
    // This will give us space to make a wider turn.
 
    if (dir == LEFT){
-      delay(150); //Overshoot
-      motor.speed(LEFT_MOTOR,-50); //left
-      motor.speed(RIGHT_MOTOR,50); //right
-      delay(700);
+      delay(300); //Overshoot
+      motor.speed(LEFT_MOTOR,-vel); //left
+      motor.speed(RIGHT_MOTOR,vel); //right
+      delay(600);
       while(L < lthresh){;
         L = analogRead(LEFT_TAPE);
       }
       lasterr = 0; //Reset PID
    } 
    else if (dir == RIGHT){
-      delay(150); //Overshoot
-      motor.speed(LEFT_MOTOR,50); //left
-      motor.speed(RIGHT_MOTOR,-50); //right
-      delay(700); //Pause for 0.5s
+      delay(300); //Overshoot
+      motor.speed(LEFT_MOTOR,vel); //left
+      motor.speed(RIGHT_MOTOR,-vel); //right
+      delay(600); //Pause for 0.5s
       while(R < rthresh){
           R = analogRead(RIGHT_TAPE);
       }
@@ -210,20 +188,20 @@ void turn(char dir){
    }
    else if (dir == BACKWARD){
       int i = 0; // Turn counter
-      int V = 60; // Velocity for turn
+      int V = vel; // Velocity for turn
       int ti; 
       int tf; 
       int turnTime = 600; //ms
       bool stopTurn = false;
 
       motor.speed(LEFT_MOTOR,-V);
-      motor.speed(RIGHT_MOTOR,-V/2);
+      motor.speed(RIGHT_MOTOR,0);
       delay(1000); //Reverse for 0.3 sec
       //MAYBE OVERSHOOT TO SEE IF NEAR AN INTERSECTION, THEN PULL FORWARD AND DO THE TURN
       while(stopTurn == false){
         if(i % 2 == 1){
             motor.speed(LEFT_MOTOR,-V);
-            motor.speed(RIGHT_MOTOR,-V/2);
+            motor.speed(RIGHT_MOTOR,0);
             ti = millis(); //Initial time
             tf = millis(); //Final time
             while(tf-ti < turnTime){
@@ -231,7 +209,7 @@ void turn(char dir){
               tf = millis(); //Final time
             }
         } else {
-            motor.speed(LEFT_MOTOR,V/2);
+            motor.speed(LEFT_MOTOR,0);
             motor.speed(RIGHT_MOTOR,V);
             ti = millis(); //Initial time
             tf = millis(); //Final time
