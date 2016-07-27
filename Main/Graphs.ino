@@ -222,8 +222,6 @@ void updateParameters(int *cN, int fN, char *dir){
                  on top of the stack.
 */
 StackList<int> pathFind(int start, int finish, char direction){
-  // The collision will be set to 0 if no collision, or the node value
-  // where a collision was detected, allowing no link to be made between
   // cN and collisionNode for a direct path.  
   // Return an array of nodes between cN and fN
   // This is an implementation of Dijkstra's algorithm
@@ -251,6 +249,96 @@ StackList<int> pathFind(int start, int finish, char direction){
   if (direction == WEST) {rev = EAST;}
   int bck = getNode(start,rev);
   distance[start-1][bck-1] = 0; // Can never go backwards 
+    
+  while (done != true){
+    // Obtain lengths from current node to adjacent nodes -> replace distance if smaller than current value.
+    for(int i = 1; i <= NODES; i++){ 
+      int len = distance[cN-1][i-1]; // length. Note: Distance is a global variable 
+      if(len != 0 && (dist[cN-1] + len) < dist[i-1] ){
+          dist[i-1] = dist[cN-1] + len;
+          prev[i-1] = cN; 
+      }
+    }
+    // Find the next minimum node length. If this it the final node, end the algorithm.
+    int nextNode;
+    int nextLen = 999; 
+    for(int j = 1; j <= NODES; j++){ 
+      int nodeLen = dist[j-1];
+      if (check[j-1] == false && nodeLen < nextLen){ //Prevents backwards travel & finds the shortest next node
+        nextLen = nodeLen;
+        nextNode = j; 
+      }
+    }
+    // Check to see if we will redo this loop
+    cN = nextNode;
+    check[cN-1] = true;
+    if (cN == fN)
+      done = true;
+  }
+
+  bool stackLoop = false;
+  while (stackLoop != true){
+      output.push(cN);
+      if (cN == sN){
+        stackLoop = true;
+        output.pop(); //Get rid of the cN = start entry
+      }else{
+        cN = prev[cN-1];
+      }
+  }
+  return output;
+}
+
+
+/*
+  Function: pathFind_noFwd
+
+  Description:
+  This function will find the shortest distance by using the Dijkstra
+  algorithm. It will use the distance[][] array above for determining
+  distances. It will avoid reversing by considering the current 
+  direction of the robot. It will not travel forward
+
+  Code Inputs:
+    * start: The current node of the robot (node that the robot is approaching)
+    * finish: The desired final node of the robot.
+    * direction: The current direction of the robot
+  Code Outputs:
+    * StackList: A stack of future commands. The first to be executed will be 
+                 on top of the stack.
+*/
+StackList<int> pathFind_noFwd(int start, int finish, char direction){
+  // cN and collisionNode for a direct path.  
+  // Return an array of nodes between cN and fN
+  // This is an implementation of Dijkstra's algorithm
+
+  StackList <int> output;
+  int sN = start; // Start node
+  int cN = start; // Current node
+  int fN = finish; // Finish node
+  bool done = false;
+  bool check[20]; // Nodes already checked
+  int dist[20]; // Distances from start to each node
+  int prev[20]; // Best connection to previous node
+  int distance[20][20]; 
+  for(int a=0;a<20;a++){for(int b=0;b<20;b++){distance[a][b]=nodeDistance[a][b];}} //Copy nodeDistance to clean array
+  for(int c=0;c<20;c++){check[c]=false;dist[c]=999;prev[c]=999;} //Assign above array values
+
+  dist[cN-1] = 0; // Initialize the distance from start -> start = 0
+  check[cN-1] = true; // Starting node is checked
+
+  //Set the forward direction to be impossible by modifying distance[][]
+  int fwd = getNode(start,direction);
+  distance[start-1][fwd-1] = 0; // Never go forward (guaranteed to exist as this function is only called upon straight reverse)
+
+  //Set the reverse direction to be impossible by modifying distance[][]
+  char rev = UNDEFINED;
+  if (direction == NORTH) {rev = SOUTH;}
+  if (direction == SOUTH) {rev = NORTH;}
+  if (direction == EAST) {rev = WEST;}
+  if (direction == WEST) {rev = EAST;}
+  int bck = getNode(start,rev);
+  if (bck != 999){distance[start-1][bck-1] = 0;} // Can never go backwards (if backwards exists, 999 is the not-existing value)
     
   while (done != true){
     // Obtain lengths from current node to adjacent nodes -> replace distance if smaller than current value.
