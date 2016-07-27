@@ -20,24 +20,6 @@
   Modified: June 30, 2016
     By: Jacob Budzis
 */
-#define NORTH 'N'
-#define SOUTH 'S'
-#define EAST 'E'
-#define WEST 'W'
-#define RIGHT 'R'
-#define LEFT 'L'
-#define FORWARD 'F'
-#define UNDEFINED 'U'
-#define LEFT_INTERSECTION 4
-#define RIGHT_INTERSECTION 1
-#define LEFT_TAPE 5
-#define RIGHT_TAPE 0
-#define LEFT_MOTOR 0
-#define RIGHT_MOTOR 1
-#define PROPORTIONAL 7
-#define DERIVATIVE 6
-#define LEFT_FWD_COLLISION 4
-#define RIGHT_FWD_COLLISION 7
 
 int lthresh = 30; //Threshold before left QRD detects paper 
 int rthresh = 30; //Threshold before right QRD detects paper
@@ -49,7 +31,7 @@ double m = 0; //#Clock oulses in current state, relating to error
 double d; //PID Derivative. m = y/x = (error-lasterr)/(q+m)
 double p; //PID Proportional. 
 double con; //Control Applied = kd*d + kp*p;
-double vel = 70; // Current to motor
+double vel = 80; // Current to motor
 int t = 0; //Counter
 
 /*
@@ -156,30 +138,46 @@ void turn(char dir){
 
    int L = 0; //Left middle QRD Signal
    int R = 0; //Right middle QRD Signal
-
+   int ti; //Initial turn time
+   int tf; //Final turn time
+   int turnTime = 600; //ms
+      
    // Begin by going past the intersection. 
    // This will give us space to make a wider turn.
 
    if (dir == LEFT){
-      delay(300); //Overshoot
+      delay(150); //Overshoot
       motor.speed(LEFT_MOTOR,-vel); //left
       motor.speed(RIGHT_MOTOR,vel); //right
-      delay(600);
+      delay(400);
       while(L < lthresh){;
         L = analogRead(LEFT_TAPE);
       }
       lasterr = 0; //Reset PID
+      ti = millis(); //Initial time
+      tf = millis(); //Final time
+      while(tf-ti < turnTime){
+          followTape();
+          tf = millis(); //Final time
+      }
    } 
    else if (dir == RIGHT){
-      delay(300); //Overshoot
+      delay(150); //Overshoot
       motor.speed(LEFT_MOTOR,vel); //left
       motor.speed(RIGHT_MOTOR,-vel); //right
-      delay(600); //Pause for 0.5s
+      delay(400); //Pause for 0.5s
       while(R < rthresh){
           R = analogRead(RIGHT_TAPE);
       }
       //motor.stop_all();   
       lasterr = 0; //Reset PID
+      ti = millis(); //Initial time
+      tf = millis(); //Final time
+      while(tf-ti < turnTime){
+          followTape();
+          tf = millis(); //Final time
+      }
+      
    } 
    else if (dir == FORWARD){
       motor.speed(LEFT_MOTOR,vel+con); //left
@@ -189,40 +187,44 @@ void turn(char dir){
    else if (dir == BACKWARD){
       int i = 0; // Turn counter
       int V = vel; // Velocity for turn
-      int ti; 
-      int tf; 
-      int turnTime = 600; //ms
       bool stopTurn = false;
 
-      motor.speed(LEFT_MOTOR,-V);
-      motor.speed(RIGHT_MOTOR,0);
-      delay(1000); //Reverse for 0.3 sec
-      //MAYBE OVERSHOOT TO SEE IF NEAR AN INTERSECTION, THEN PULL FORWARD AND DO THE TURN
-      while(stopTurn == false){
-        if(i % 2 == 1){
-            motor.speed(LEFT_MOTOR,-V);
-            motor.speed(RIGHT_MOTOR,0);
-            ti = millis(); //Initial time
-            tf = millis(); //Final time
-            while(tf-ti < turnTime){
-              if ( analogRead(LEFT_TAPE) > lthresh || analogRead(RIGHT_TAPE) > rthresh) stopTurn = true;
+        motor.speed(LEFT_MOTOR,-V);
+        motor.speed(RIGHT_MOTOR,0);
+        delay(500); //Reverse for 0.3 sec
+        //MAYBE OVERSHOOT TO SEE IF NEAR AN INTERSECTION, THEN PULL FORWARD AND DO THE TURN
+        while(stopTurn == false){
+          if(i % 2 == 1){
+              motor.speed(LEFT_MOTOR,-V);
+              motor.speed(RIGHT_MOTOR,0);
+              ti = millis(); //Initial time
               tf = millis(); //Final time
-            }
-        } else {
-            motor.speed(LEFT_MOTOR,0);
-            motor.speed(RIGHT_MOTOR,V);
-            ti = millis(); //Initial time
-            tf = millis(); //Final time
-            while(tf-ti < turnTime){
-              if ( analogRead(LEFT_TAPE) > lthresh || analogRead(RIGHT_TAPE) > rthresh) stopTurn = true;
+              while(tf-ti < 300){
+                if ( analogRead(LEFT_TAPE) > lthresh || analogRead(RIGHT_TAPE) > rthresh) stopTurn = true;
+                tf = millis(); //Final time
+              }
+          } else {
+              motor.speed(LEFT_MOTOR,0);
+              motor.speed(RIGHT_MOTOR,V);
+              ti = millis(); //Initial time
               tf = millis(); //Final time
-            }
+              while(tf-ti < 300){
+                if ( analogRead(LEFT_TAPE) > lthresh || analogRead(RIGHT_TAPE) > rthresh) stopTurn = true;
+                tf = millis(); //Final time
+              }
+          }
+          i = i + 1;
         }
-        i = i + 1;
+        motor.speed(LEFT_MOTOR,0);
+        motor.speed(RIGHT_MOTOR,0);
+        lasterr = 5; //Set PID to compensate
+
+      ti = millis(); //Initial time
+      tf = millis(); //Final time
+      while(tf-ti < 50){ //Accelerate
+          followTape();
+          tf = millis(); //Final time
       }
-      motor.speed(LEFT_MOTOR,0);
-      motor.speed(RIGHT_MOTOR,0);
-      lasterr = 5; //Set PID to compensate
    }
 }
 
@@ -247,3 +249,34 @@ bool detectCollision(){
   if(left == LOW || right == LOW) {output = true;}
   return output;
 }
+
+
+/*
+  Function: reverse
+
+  Description:
+  Runs the robot straight backwards until an intersection is detected.
+
+  Code Inputs:
+    * detectIntersection() function
+  Code Outputs:
+    * None
+  TINAH Inputs:
+    * Motor : Right Motor
+    * Motor : Left Motor
+
+*/
+
+void reverse(){
+   motor.speed(LEFT_MOTOR,0);
+   motor.speed(RIGHT_MOTOR,0);
+   delay(50); //Pause briefly
+   motor.speed(LEFT_MOTOR,-vel);
+   motor.speed(RIGHT_MOTOR,-vel);
+   while(!detectIntersection(FORWARD)){
+      //Do nothing, just keep reversing
+   }
+   motor.speed(LEFT_MOTOR,0); //Stop the motors again.
+   motor.speed(RIGHT_MOTOR,0); 
+}
+

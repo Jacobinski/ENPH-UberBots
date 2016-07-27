@@ -20,12 +20,14 @@
 #define RIGHT 'R'
 #define LEFT 'L'
 #define FORWARD 'F'
-#define BACKWARD 'B'
+#define BACKWARD 'B' //This is when we rotate the robot 180 degrees
+#define REVERSE 'R' //This is when we go straight backwards
 #define UNDEFINED 'U'
 #define NUMCHECKPOINTS 7
 
 int checkpoint; // Checkpoints on the map that the robot wishes to reach
 int counter; // Displaying driving stats
+int timeLastIntersection; // Time at last intersection
 bool passenger; // Passenger carrying status
 bool collision; // Collision flag
 char turnDir; // The direction of the next turn
@@ -38,24 +40,25 @@ const int checkpointNodes[NUMCHECKPOINTS] = {1,7,11,16,20,18,3};
 void nav_init(){
   passenger = false;
   collision = false;
+  timeLastIntersection = millis();
   turnDir = UNDEFINED;
   counter = 0;
   dir = SOUTH; dir_p = &dir;
   cN = 19; cN_p = &cN; checkpoint = 4; 
   while(!startbutton()){
       int counter = counter + 1;
-      if (counter == 30){
+      if (counter == 300){
         LCD.clear();
         LCD.setCursor(0,0);
-        LCD.print("Starting node:");
+        LCD.print("Initial node:");
         LCD.print(cN);
         LCD.setCursor(0,1);
-        LCD.print("Press start when ready");
+        LCD.print("Press Start");
         counter = 0;
       }
       if(stopbutton()){
         if (cN == 19) {cN = 2; checkpoint = 0;}
-        else          {cN = 19; checkpoint = 6;}
+        else          {cN = 19; checkpoint = 5;}
         delay(300); // Just to make sure we have time to unpress
       }
   }
@@ -84,17 +87,21 @@ void navigate(){
     }
     // Make decisions at intersection
     if (detectIntersection(turnDir)){ // See if we need to turn
+      timeLastIntersection = millis(); // Update turn
       updateParameters(cN_p, fN.pop(), dir_p); // Account for the new position at the intersection.
       turn(turnDir); 
       turnDir = UNDEFINED; // Clear the turn direction
     }
     // Detect passenger
-    if (analogRead(QRD) > QRD_THRESH){
+    /*if (analogRead(QRD) > QRD_THRESH){
       // Jenny's arm function
+      LCD.clear();
+      LCD.setCursor(0,0);
+      LCD.print("Obtain Animal");
       passenger = true;
       StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
       StackList <int> dropoff_path2 = pathFind(cN,17,dir); 
-      if (dropoff_path1.count() < dropoff_path2.count()){ //We want the shorter path
+      if (dropoff_path1.count() < dropoff_path2.count() && dropoff_path1.count() != 0){ //We want the shorter path, but we want to reenter the 4-17 edge. Thus != 0 length
           while(!dropoff_path1.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path1.peek());fN.push(dropoff_path1.pop());delay(500);} 
           fN.push(17); //Direction to face
       } 
@@ -102,7 +109,7 @@ void navigate(){
           while(!dropoff_path2.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path2.peek());fN.push(dropoff_path2.pop());delay(500);} 
           fN.push(4); //Direction to face
       }
-    }
+    }*/
     // Default
     else{
       followTape();
@@ -152,13 +159,15 @@ void navigate(){
         motor.stop(RIGHT_MOTOR);
         if (collision == true){
           StackList <int> path = pathFind(cN,checkpointNodes[checkpoint],dir); 
-          while(!path.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(path.peek());fN.push(path.pop());delay(500);} 
+          //while(!path.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(path.peek());fN.push(path.pop());delay(500);}
+          while(!path.isEmpty()){fN.push(path.pop());}  
           collision = false; //NOTE: If path is empty, we will return to this fN.isEmpty() immediately, and move onto the next checkpoint in the below else if{}
         }
         else if (collision == false){
           checkpoint = (checkpoint+1) % NUMCHECKPOINTS; // Cycle checkpoints
           StackList <int> path = pathFind(cN,checkpointNodes[checkpoint],dir); 
-          while(!path.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(path.peek());fN.push(path.pop());delay(500);} 
+          //while(!path.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(path.peek());fN.push(path.pop());delay(500);} 
+          while(!path.isEmpty()){fN.push(path.pop());}  
         }
     }
     else{

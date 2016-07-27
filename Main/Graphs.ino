@@ -1,4 +1,4 @@
-/*
+  /*
   Title:
   Graphs
 
@@ -243,7 +243,7 @@ StackList<int> pathFind(int start, int finish, char direction){
   dist[cN-1] = 0; // Initialize the distance from start -> start = 0
   check[cN-1] = true; // Starting node is checked
 
-  //Set the reverse direction to be a last case scenario by modifying distance[][]
+  //Set the reverse direction to be impossible by modifying distance[][]
   char rev = UNDEFINED;
   if (direction == NORTH) {rev = SOUTH;}
   if (direction == SOUTH) {rev = NORTH;}
