@@ -115,6 +115,9 @@ bool detectIntersection(char dir){
   else if (dir == FORWARD){
     if (left > lthresh || right > rthresh) output = true;
   }
+  else if (dir == BACKWARD){
+    if (left > lthresh || right > rthresh) output = true;
+  }
 
   return output;
 }
@@ -146,12 +149,19 @@ void turn(char dir){
    // This will give us space to make a wider turn.
 
    if (dir == LEFT){
-      delay(150); //Overshoot
+      delay(200); //Overshoot
       motor.speed(LEFT_MOTOR,-vel); //left
       motor.speed(RIGHT_MOTOR,vel); //right
       delay(400);
+      ti = millis(); //Initial time
+      tf = millis(); //Final time
       while(L < lthresh){;
         L = analogRead(LEFT_TAPE);
+        tf = millis(); //Final time
+        if(tf-ti>1000){  //Fix the turn
+          motor.speed(LEFT_MOTOR,vel); //left
+          motor.speed(RIGHT_MOTOR,-vel); //right
+        }
       }
       lasterr = 0; //Reset PID
       ti = millis(); //Initial time
@@ -162,12 +172,19 @@ void turn(char dir){
       }
    } 
    else if (dir == RIGHT){
-      delay(150); //Overshoot
+      delay(200); //Overshoot
       motor.speed(LEFT_MOTOR,vel); //left
       motor.speed(RIGHT_MOTOR,-vel); //right
       delay(400); //Pause for 0.5s
+      ti = millis(); //Initial time
+      tf = millis(); //Final time
       while(R < rthresh){
           R = analogRead(RIGHT_TAPE);
+          tf = millis(); //Final time
+          if(tf-ti>1000){  //Fix the turn
+            motor.speed(LEFT_MOTOR,-vel); //left
+            motor.speed(RIGHT_MOTOR,vel); //right
+        }
       }
       //motor.stop_all();   
       lasterr = 0; //Reset PID

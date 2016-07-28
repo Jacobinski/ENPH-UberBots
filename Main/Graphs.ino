@@ -272,8 +272,8 @@ StackList<int> pathFind(int start, int finish, char direction){
     // Check to see if we will redo this loop
     cN = nextNode;
     check[cN-1] = true;
-    if (cN == fN)
-      done = true;
+    if (cN == fN){done = true;}
+    if (nextLen == 999) {done = true;} //Nothing left 
   }
 
   bool stackLoop = false;
@@ -362,8 +362,8 @@ StackList<int> pathFind_noFwd(int start, int finish, char direction){
     // Check to see if we will redo this loop
     cN = nextNode;
     check[cN-1] = true;
-    if (cN == fN)
-      done = true;
+    if (cN == fN){done = true;}
+    if (nextLen == 999) {done = true;} //Nothing left 
   }
 
   bool stackLoop = false;

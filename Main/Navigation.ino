@@ -24,6 +24,7 @@
 #define REVERSE 'R' //This is when we go straight backwards
 #define UNDEFINED 'U'
 #define NUMCHECKPOINTS 7
+#define SMALLREVERSETIME 1000 //Threshold for straight reverse vs. U turn 
 
 int checkpoint; // Checkpoints on the map that the robot wishes to reach
 int counter; // Displaying driving stats
@@ -58,10 +59,14 @@ void nav_init(){
       }
       if(stopbutton()){
         if (cN == 19) {cN = 2; checkpoint = 0;}
-        else          {cN = 19; checkpoint = 5;}
+        else          {cN = 19; checkpoint = 4;}
         delay(300); // Just to make sure we have time to unpress
       }
   }
+  RCServo1.write(180); //Arm starts up
+  delay(1000);
+  RCServo0.write(90); //Position of the base starts in the middle
+  RCServo2.write(0); //Claw starts open
 }
 
 void navigate(){
@@ -93,27 +98,183 @@ void navigate(){
       turnDir = UNDEFINED; // Clear the turn direction
     }
     // Detect passenger
-    /*if (analogRead(QRD) > QRD_THRESH){
-      // Jenny's arm function
+    double left_ir = analogRead(LEFT_IR);
+    double right_ir = analogRead(RIGHT_IR);
+    if (((left_ir*5.0/1024.0) > 1.5 || (right_ir*5.0/1024.0) > 1.5)){
+      for(int i=0; i<4;i++){
+        left_ir = left_ir + analogRead(LEFT_IR);
+        right_ir = right_ir + analogRead(RIGHT_IR);
+      }
+    }
+    
+    if (((left_ir*5.0/1024.0) > IR_THRESH || (right_ir*5.0/1024.0) > IR_THRESH) && passenger == false){
       LCD.clear();
       LCD.setCursor(0,0);
-      LCD.print("Obtain Animal");
+      LCD.print("L IR:");
+      LCD.print(left_ir*5.0/1024.0);
+      LCD.setCursor(0,1);
+      LCD.print("R IR:");
+      LCD.print(right_ir*5.0/1024.0);
+      motor.speed(LEFT_MOTOR,0);
+      motor.speed(RIGHT_MOTOR,0);
+      delay(3000);
+      
+      // --------------------------------------------------------------------- Jenny's arm function --------------------------------------------------------------------------------------------
+        if((left_ir*5.0/1024.0) > IR_THRESH){
+          //Base rotation - Find the direction of the strongest IR signal
+          LCD.clear();
+          LCD.print("Rotation");
+          delay(1000);
+          RCServo0.write(150);
+        
+          //Arm height - lower arm to height of passenger
+          LCD.clear();
+          LCD.print("Lowering arm");
+          delay(1000);
+          RCServo1.write(30);
+        
+          //Claw closing
+          LCD.clear();
+          LCD.print("Closing claw");
+          delay(1000);
+          RCServo2.write(52);
+          
+          //Microswitch detection of passenger
+          if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
+            LCD.clear();
+            LCD.print("Passenger");
+            delay(1000);
+          }
+          
+          //lift arm
+          LCD.clear();
+          LCD.print("Lifting arm");
+          delay(1000);
+          RCServo1.write(180);
+          
+          //Rotate base
+          LCD.clear();
+          LCD.print("Rotation");
+          delay(1000);
+          RCServo0.write(90);
+              
+       }
+
+        if((right_ir*5.0/1024.0) > IR_THRESH){
+          //Base rotation - Find the direction of the strongest IR signal
+          LCD.clear();
+          LCD.print("Rotation");
+          delay(1000);
+          RCServo0.write(0);
+        
+          //Arm height - lower arm to height of passenger
+          LCD.clear();
+          LCD.print("Lowering arm");
+          delay(1000);
+          RCServo1.write(30);
+        
+          //Claw closing
+          LCD.clear();
+          LCD.print("Closing claw");
+          delay(1000);
+          RCServo2.write(52);
+          
+          //Microswitch detection of passenger
+          if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
+            LCD.clear();
+            LCD.print("Passenger");
+            delay(1000);
+          }
+          
+          //lift arm
+          LCD.clear();
+          LCD.print("Lifting arm");
+          delay(1000);
+          RCServo1.write(180);
+          
+          //Rotate base
+          LCD.clear();
+          LCD.print("Rotation");
+          delay(1000);
+          RCServo0.write(90);         
+       }
+      // --------------------------------------------------------------------- END ------------------------------------------------------------------------------------------------------------
       passenger = true;
       StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
-      StackList <int> dropoff_path2 = pathFind(cN,17,dir); 
-      if (dropoff_path1.count() < dropoff_path2.count() && dropoff_path1.count() != 0){ //We want the shorter path, but we want to reenter the 4-17 edge. Thus != 0 length
-          while(!dropoff_path1.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path1.peek());fN.push(dropoff_path1.pop());delay(500);} 
-          fN.push(17); //Direction to face
-      } 
-      else {
-          while(!dropoff_path2.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path2.peek());fN.push(dropoff_path2.pop());delay(500);} 
-          fN.push(4); //Direction to face
+      StackList <int> dropoff_path2 = pathFind(cN,17,dir);
+      turnDir = UNDEFINED; //Reset turn
+      if(dropoff_path1.isEmpty() && dropoff_path2.isEmpty()){ //If no available path, turn around
+       turn(BACKWARD);
+       char cD = dir;  //get current Direction
+       if (cD == NORTH) {dir = SOUTH;}
+       if (cD == SOUTH) {dir = NORTH;}
+       if (cD == EAST) {dir = WEST;}
+       if (cD == WEST) {dir = EAST;}
+       int nxt = getNode(cN,dir);
+       updateParameters(cN_p, nxt, dir_p);
+       StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
+       StackList <int> dropoff_path2 = pathFind(cN,17,dir);
       }
-    }*/
+      while(!fN.isEmpty()) {fN.pop();} //Clear the fN list 
+      //Case 1: At node 17
+      if(cN == 17){
+        LCD.clear();
+        LCD.home();
+        LCD.print("Case 1");
+        delay(2000);
+        fN.push(4);
+        checkpoint = 2; 
+      }
+      //Case 2: At node 4
+      else if(cN == 4){
+        LCD.clear();
+        LCD.home();
+        LCD.print("Case 2");
+        delay(2000);
+        fN.push(17);
+        checkpoint = 0;
+      }
+      //Case 3: Closer to node 4
+      else if(dropoff_path1.count() < dropoff_path2.count()){
+          while(!dropoff_path1.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path1.peek());fN.push(dropoff_path1.pop());delay(500);} 
+          LCD.clear();
+          LCD.home();
+          LCD.print("Case 3");
+          delay(2000);
+          fN.push(17); //Direction to face
+          checkpoint = 2; 
+      }
+      //Case 4: Closer to node 17
+      else if(dropoff_path2.count() < dropoff_path1.count()){
+          while(!dropoff_path2.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path2.peek());fN.push(dropoff_path2.pop());delay(500);} 
+          LCD.clear();
+          LCD.home();
+          LCD.print("Case 4");
+          delay(2000);
+          fN.push(4); //Direction to face
+          checkpoint = 0; 
+      }
+      else{
+        LCD.clear();
+        LCD.home();
+        LCD.print("Cant find dest");
+        delay(2000);
+      }
+    }
     // Default
     else{
       followTape();
       counter = counter + 1;
+      /*if (counter == 20){
+        LCD.clear();
+        LCD.setCursor(0,0);
+        LCD.print("L IR:");
+        LCD.print(analogRead(LEFT_IR)*5.0/1024.0);
+        LCD.setCursor(0,1);
+        LCD.print("R IR:");
+        LCD.print(analogRead(RIGHT_IR)*5.0/1024.0);
+        counter = 0;
+      }*/
       if (counter == 20){
         LCD.clear();
         LCD.setCursor(0,0);
@@ -146,14 +307,79 @@ void navigate(){
        }  
        // If we have a passenger, drop it off
        if (passenger == true){ 
-          checkpoint = 5; //Always go to bottom right corner afterwards. (5 {+ 1 from .isEmpty()})
           int ti = millis(); //Initial time
           int tf = millis(); //Final time
-          while (tf-ti < 2000){ //Go forward for 2 seconds
+          while (tf-ti < 1500){ //Go forward for 1.5 seconds
             followTape();
             tf = millis();
           }
-          //DROP OFF PASSENGER
+          motor.speed(LEFT_MOTOR,0);
+          motor.speed(RIGHT_MOTOR,0);
+          passenger = false;
+          
+          //DROP OFF PASSENGER - Jenny-------------------------------------------------------------------
+
+          if(dir == EAST){
+            //Rotate base
+            LCD.clear();
+            LCD.print("Rotation");
+            delay(1000);
+            RCServo0.write(0);
+
+            //Lower arm
+            LCD.clear();
+            LCD.print("Lowering Arm");
+            delay(1000);
+            RCServo1.write(30);
+          
+            //open claw
+            LCD.clear();
+            LCD.print("Opening claw");
+            delay(1000);
+            RCServo2.write(0);
+            delay(500);
+
+            //reset
+            LCD.clear();
+            LCD.print("Reset");
+            delay(1000);
+            RCServo1.write(180); //Arm starts up
+            delay(1000);
+            RCServo0.write(90); //Position of the base starts in the middle
+            RCServo2.write(0); //Claw starts open
+          }
+
+          if(dir == WEST){
+            //Rotate base
+            LCD.clear();
+            LCD.print("Rotation");
+            delay(1000);
+            RCServo0.write(150);
+
+            //Lower arm
+            LCD.clear();
+            LCD.print("Lowering Arm");
+            delay(1000);
+            RCServo1.write(30);
+          
+            //open claw
+            LCD.clear();
+            LCD.print("Opening claw");
+            delay(1000);
+            RCServo2.write(0);
+            delay(500);
+
+            //reset
+            LCD.clear();
+            LCD.print("Reset");
+            delay(1000);
+            RCServo1.write(180); //Arm starts up
+            delay(1000);
+            RCServo0.write(90); //Position of the base starts in the middle
+            RCServo2.write(0); //Claw starts open
+          }
+        
+          //-------------------------------------------------------------------------------------------  
        }
         motor.stop(LEFT_MOTOR);
         motor.stop(RIGHT_MOTOR);
