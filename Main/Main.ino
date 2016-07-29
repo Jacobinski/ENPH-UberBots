@@ -14,7 +14,7 @@
 #define UNDEFINED 'U'
 #define LEFT_MOTOR 1 //Motor input
 #define RIGHT_MOTOR 2 //Motor input
-
+//JENNY WAS HERE
 #define LEFT_IR 0 //Analog Input
 #define RIGHT_IR 2 //Analog Input
 #define PROPORTIONAL 7 //Analog Input (Don't plug anything in)
