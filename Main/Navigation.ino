@@ -112,46 +112,64 @@ void navigate(){
       delay(2000);
       
       // --------------------------------------------------------------------- Jenny's arm function --------------------------------------------------------------------------------------------
+        //If IR is detected on the left side of the vehicle:
         if((left_ir*5.0/1024.0) > IR_THRESH){
-          //Base rotation - Find the direction of the strongest IR signal
+          //Base rotation: 
+          //rotates towards the direction of the strongest IR signal
           LCD.clear(); LCD.print("Rotation"); delay(1000);
           RCServo0.write(160);
-          //Arm height - lower arm to height of passenger
+          //Arm height adjustment:
+          //lower arm to height of passenger
           LCD.clear(); LCD.print("Lowering arm"); delay(1000);
           RCServo1.write(30);
-          //Claw closing
+          //Claw actuation:
+          //claw closes around the passenger
           LCD.clear(); LCD.print("Closing claw"); delay(1000);
-          RCServo2.write(52);
-          //Microswitch detection of passenger
+          RCServo2.write(52); 
+          
+          //Microswitch detection: 
+          //microswitch detects whether or not a passenger has been obtained
           if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
             LCD.clear(); LCD.print("Passenger"); delay(1000);
           }
-          //lift arm
+          
+          //Arm height adjustment:
+          //lift arm (with passenger)
           LCD.clear(); LCD.print("Lifting arm"); delay(1000); 
           RCServo1.write(180);
-          //Rotate base
+          //Base rotation:
+          //rotate base towards the middle 
           LCD.clear(); LCD.print("Rotation"); delay(1000);
           RCServo0.write(90);   
        }
 
-        if((right_ir*5.0/1024.0) > IR_THRESH){
-          //Base rotation - Find the direction of the strongest IR signal
+       //If IR is detected on the right side of the vehicle
+       if((right_ir*5.0/1024.0) > IR_THRESH){
+          //Base rotation: 
+          //rotates towards the direction of the strongest IR signal
           LCD.clear(); LCD.print("Rotation"); delay(1000);
           RCServo0.write(0);
-          //Arm height - lower arm to height of passenger
+          //Arm height adjustment:
+          //lower arm to height of passenger
           LCD.clear(); LCD.print("Lowering arm"); delay(1000);
           RCServo1.write(30); 
-          //Claw closing
+          //Claw actuation:
+          //claw closes around the passenger
           LCD.clear(); LCD.print("Closing claw"); delay(1000);
           RCServo2.write(52);
-          //Microswitch detection of passenger
+          
+          //Microswitch detection: 
+          //microswitch detects whether or not a passenger has been obtained
           if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
             LCD.clear(); LCD.print("Passenger"); delay(1000);
           }
-          //lift arm
+          
+          //Arm height adjustment:
+          //lift arm (with passenger)
           LCD.clear(); LCD.print("Lifting arm"); delay(1000);
           RCServo1.write(180);
-          //Rotate base
+          //Base rotation:
+          //rotate base towards the middle 
           LCD.clear(); LCD.print("Rotation"); delay(1000);
           RCServo0.write(90);         
        }
