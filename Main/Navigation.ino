@@ -30,6 +30,7 @@
 int checkpoint; // Checkpoints on the map that the robot wishes to reach
 int counter; // Displaying driving stats
 int timeLastIntersection; // Time at last intersection
+bool smallreverse; //Determines if we just did a small reverse. This is for pathFinding purposes
 bool passenger; // Passenger carrying status
 bool collision; // Collision flag
 char turnDir; // The direction of the next turn
@@ -42,6 +43,7 @@ const int checkpointNodes[NUMCHECKPOINTS] = {1,7,11,16,20,18,3};
 void nav_init(){
   passenger = false;
   collision = false;
+  smallreverse = false;
   timeLastIntersection = millis();
   turnDir = UNDEFINED;
   counter = 0;
@@ -86,6 +88,7 @@ void navigate(){
     // Make decisions at intersection
     int paths = detectValidPaths();
     if (paths != 999){  // If there a direction other than forward
+       timeLastIntersection = millis();
        if(turnDir == LEFT && (paths == 1 || paths == 3 || paths == 4 || paths == 6)) {nav_Intersection();}
        else if(turnDir == RIGHT && (paths == 1 || paths == 2 || paths == 4 || paths == 5)) {nav_Intersection();}
        else if(turnDir == FORWARD && (paths == 1 || paths == 2 || paths == 3)) {nav_Intersection();}
@@ -112,7 +115,7 @@ void navigate(){
         if((left_ir*5.0/1024.0) > IR_THRESH){
           //Base rotation - Find the direction of the strongest IR signal
           LCD.clear(); LCD.print("Rotation"); delay(1000);
-          RCServo0.write(150);
+          RCServo0.write(160);
           //Arm height - lower arm to height of passenger
           LCD.clear(); LCD.print("Lowering arm"); delay(1000);
           RCServo1.write(30);
@@ -288,16 +291,20 @@ void navigate(){
        }  
         motor.stop(LEFT_MOTOR);
         motor.stop(RIGHT_MOTOR);
-        if (collision == true){
+        if (collision == true  && smallreverse == false){
           StackList <int> path = pathFind(cN,checkpointNodes[checkpoint],dir); 
-          //while(!path.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(path.peek());fN.push(path.pop());delay(500);}
           while(!path.isEmpty()){fN.push(path.pop());}  
           collision = false; //NOTE: If path is empty, we will return to this fN.isEmpty() immediately, and move onto the next checkpoint in the below else if{}
+        }
+        else if (collision == true && smallreverse == true){
+          StackList <int> path = pathFind_noFwd(cN,checkpointNodes[checkpoint],dir); 
+          while(!path.isEmpty()){fN.push(path.pop());}  
+          smallreverse = false;
+          collision = false;
         }
         else if (collision == false){
           checkpoint = (checkpoint+1) % NUMCHECKPOINTS; // Cycle checkpoints
           StackList <int> path = pathFind(cN,checkpointNodes[checkpoint],dir); 
-          //while(!path.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(path.peek());fN.push(path.pop());delay(500);} 
           while(!path.isEmpty()){fN.push(path.pop());}  
         }
     }
@@ -321,14 +328,27 @@ void navigate(){
 */
 void nav_Collision(){
   while(!fN.isEmpty()) {fN.pop();} //Clear the fN list
-  turn(BACKWARD);
-  char cD = dir;  //get current Direction
-  if (cD == NORTH) {dir = SOUTH;}
-  if (cD == SOUTH) {dir = NORTH;}
-  if (cD == EAST) {dir = WEST;}
-  if (cD == WEST) {dir = EAST;}
-  int nxt = getNode(cN,dir);
-  updateParameters(cN_p, nxt, dir_p);
+  if (millis() - timeLastIntersection > SMALLREVERSETIME){
+    turn(BACKWARD);
+    char cD = dir;  //get current Direction
+    if (cD == NORTH) {dir = SOUTH;}
+    if (cD == SOUTH) {dir = NORTH;}
+    if (cD == EAST) {dir = WEST;}
+    if (cD == WEST) {dir = EAST;}
+    int nxt = getNode(cN,dir);
+    updateParameters(cN_p, nxt, dir_p); // Pointing opposite direction as previous, at the old node
+  }
+  else{
+    smallreverse = true;
+    reverse();
+    char rD = dir;  //get reverse Direction
+    if (dir == NORTH) {rD = SOUTH;}
+    if (dir == SOUTH) {rD = NORTH;}
+    if (dir == EAST) {rD = WEST;}
+    if (dir == WEST) {rD = EAST;}
+    int prev = getNode(cN,rD);
+    updateParameters(cN_p, prev, dir_p);  // Pointing same direction as previous, at the old node
+  }
   turnDir = UNDEFINED; //Reset turn
   collision = true;
 }
@@ -385,7 +405,7 @@ void nav_Lost(int intsct){
     else if (intsct != 999 && fourInt == true){
       if (intsct == LR_i){ //Turn around and try again
         motor.speed(LEFT_MOTOR,-vel); motor.speed(RIGHT_MOTOR,-vel);
-        delay(1000);
+        delay(500);
         motor.speed(LEFT_MOTOR,0); motor.speed(RIGHT_MOTOR,0);
         LCD.clear(); LCD.setCursor(0,0); LCD.print("LR I"); delay(2000);
         turn(BACKWARD);
@@ -397,7 +417,7 @@ void nav_Lost(int intsct){
         dir = WEST;
         checkpoint = 1;
         found = true;
-        LCD.clear(); LCD.home(); LCD.println("FOUND 7"); 
+        LCD.clear(); LCD.home(); LCD.print("FOUND 7"); 
       }
       if (intsct == FR_i) {
         turn(RIGHT);

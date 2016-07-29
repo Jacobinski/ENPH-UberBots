@@ -28,7 +28,7 @@
 #define STOP_BUTTON 1 //Digital Input
 #define detectionPin_passenger1 4 //Digital Input
 #define detectionPin_passenger2 6 //Digital Input
-#define IR_THRESH 4 //Volts
+#define IR_THRESH 3 //Volts
 
 void setup() {
   #include <phys253setup.txt>
