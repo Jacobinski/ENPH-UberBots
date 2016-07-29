@@ -78,6 +78,37 @@ const char validDirections[NODES][DIRECTIONS] =
   {'N','U','S','W'}, // Node 19
   {'U','U','S','U'}  // Node 20
 };
+const int intersectionShapes[NODES][DIRECTIONS] = 
+{
+  //0 -> Nothing expected (Invalid direction of approach || end node)
+  //1 -> Forward, Left, Right 
+  //2 -> Forward, Right
+  //3 -> Forward, Left
+  //4 -> Left, Right
+  //5 -> Right
+  //6 -> Left
+  //N , E , S , W
+  { 0 , 0 , 0 , 0 }, // Node 1
+  { 2 , 0 , 3 , 4 }, // Node 2
+  { 0 , 0 , 6 , 5 }, // Node 3
+  { 0 , 3 , 4 , 2 }, // Node 4
+  { 1 , 1 , 1 , 1 }, // Node 5
+  { 3 , 4 , 2 , 0 }, // Node 6
+  { 0 , 0 , 0 , 0 }, // Node 7
+  { 0 , 0 , 0 , 0 }, // Node 8
+  { 3 , 4 , 2 , 0 }, // Node 9
+  { 0 , 3 , 4 , 2 }, // Node 10
+  { 0 , 0 , 0 , 0 }, // Node 11
+  { 2 , 0 , 3 , 4 }, // Node 12
+  { 1 , 1 , 1 , 1 }, // Node 13
+  { 2 , 0 , 3 , 4 }, // Node 14
+  { 0 , 0 , 0 , 0 }, // Node 15
+  { 0 , 0 , 0 , 0 }, // Node 16
+  { 0 , 3 , 4 , 2 }, // Node 17
+  { 0 , 6 , 5 , 0 }, // Node 18
+  { 3 , 4 , 2 , 0 }, // Node 19
+  { 0 , 0 , 0 , 0 }  // Node 20
+};
 const char nodeDirections[NODES][NODES] = //Defined from edges LEAVING the [x][] position
 {  
   {'U','S','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U'}, // Node 1
@@ -153,6 +184,39 @@ int getNode(int cN, char dir){
   for (int i=1;i<=NODES; i++){
     if (nodeDirections[cN-1][i-1] == dir) output = i;
   }
+  return output;
+}
+
+/*
+  Function: getShape
+
+  Description:
+  Takes inputs of an intersection node, and a direction. Will return
+  the shape that the robot expects to see upon arrival at that intersection.
+  The available "shapes" are as follows.
+
+  //0 -> Nothing expected (Invalid direction of approach || end node)
+  //1 -> Forward, Left, Right 
+  //2 -> Forward, Right
+  //3 -> Forward, Left
+  //4 -> Left, Right
+  //5 -> Right
+  //6 -> Left
+
+  Code Inputs:
+    * cN: (Int) Current node of the robot
+    * dir: (char) The direction of the robot
+  Code Outputs:
+    * output: (int) The shape in that direction. 0 if invalid
+*/
+int getShape(int cN, char dir){
+  int output = 0;
+  int dirInt = 999;
+  if (dir == NORTH) {dirInt = 0;}
+  if (dir == EAST) {dirInt = 1;}
+  if (dir == SOUTH) {dirInt = 2;}
+  if (dir == WEST) {dirInt = 3;}
+  output = intersectionShapes[cN-1][dirInt];
   return output;
 }
 
@@ -312,7 +376,6 @@ StackList<int> pathFind(int start, int finish, char direction){
   }
   return output;
 }
-
 
 /*
   Function: pathFind_noFwd
