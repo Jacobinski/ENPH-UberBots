@@ -21,6 +21,14 @@
     By: Jacob Budzis
 */
 
+//These definitions determine the intersection paths available
+#define LFR_i 1 
+#define FR_i 2
+#define LF_i 3
+#define LR_i 4
+#define R_i 5
+#define L_i 6
+
 int lthresh = 30; //Threshold before left QRD detects paper 
 int rthresh = 30; //Threshold before right QRD detects paper
 double error = 0; //Current Error
@@ -123,6 +131,56 @@ bool detectIntersection(char dir){
 }
 
 /*
+  Function: detectValidPaths
+
+  Description:
+  Rotates the robot corresponding to the turn direction given to the 
+  function. This occurs by moving the wheels in opposite directions.
+
+  Definitions:
+    #define LFR 1  Left, Forward, Right
+    #define FR 2   Foward, Right
+    #define LF 3   Left, Forward
+    #define LR 4   Left, Right
+    #define R 5    Right
+    #define L 6    Left
+*/
+int detectValidPaths(){
+  bool L_path = false;
+  bool R_path = false;
+  bool F_path = false;
+  int output = 999; // 999 is the continue on value
+
+  if(analogRead(LEFT_INTERSECTION) > lthresh){L_path = true;}  
+  if(analogRead(RIGHT_INTERSECTION) > rthresh){R_path = true;}
+
+  if(L_path == true || R_path == true){
+   int ti = millis(); //Initial time
+   int tf = millis(); //Final time
+   int t = 200; // Overshoot time
+   motor.speed(LEFT_MOTOR,vel+con); //left
+   motor.speed(RIGHT_MOTOR,vel-con); //right
+   while(tf-ti < t){
+      if(L_path == false){if(analogRead(LEFT_INTERSECTION) > lthresh){L_path = true;}}
+      if(R_path == false){if(analogRead(RIGHT_INTERSECTION) > rthresh){R_path = true;}}
+      tf = millis(); 
+    }
+    motor.speed(LEFT_MOTOR,0); //left
+    motor.speed(RIGHT_MOTOR,0); //right
+    if(analogRead(LEFT_TAPE) > lthresh || analogRead(RIGHT_TAPE) > rthresh){F_path = true;}
+  }
+
+  if(L_path == true && F_path == true && R_path == true) {output = 1;}
+  if(L_path == false && F_path == true && R_path == true) {output = 2;}
+  if(L_path == true && F_path == true && R_path == false) {output = 3;}
+  if(L_path == true && F_path == false && R_path == true) {output = 4;}
+  if(L_path == false && F_path == false && R_path == true) {output = 5;}
+  if(L_path == true && F_path == false && R_path == false) {output = 6;}
+
+  return output;
+}
+
+/*
   Function: turn
 
   Description:
@@ -144,12 +202,8 @@ void turn(char dir){
    int ti; //Initial turn time
    int tf; //Final turn time
    int turnTime = 600; //ms
-      
-   // Begin by going past the intersection. 
-   // This will give us space to make a wider turn.
 
    if (dir == LEFT){
-      delay(200); //Overshoot
       motor.speed(LEFT_MOTOR,-vel); //left
       motor.speed(RIGHT_MOTOR,vel); //right
       delay(400);
@@ -172,7 +226,6 @@ void turn(char dir){
       }
    } 
    else if (dir == RIGHT){
-      delay(200); //Overshoot
       motor.speed(LEFT_MOTOR,vel); //left
       motor.speed(RIGHT_MOTOR,-vel); //right
       delay(400); //Pause for 0.5s
@@ -193,8 +246,7 @@ void turn(char dir){
       while(tf-ti < turnTime){
           followTape();
           tf = millis(); //Final time
-      }
-      
+      }   
    } 
    else if (dir == FORWARD){
       motor.speed(LEFT_MOTOR,vel+con); //left
@@ -231,6 +283,13 @@ void turn(char dir){
               }
           }
           i = i + 1;
+          if(i == 20){  //Get unstuck
+            motor.speed(LEFT_MOTOR,-V);
+            motor.speed(RIGHT_MOTOR,-V);
+            delay(100);
+            i = 1;
+
+          }
         }
         motor.speed(LEFT_MOTOR,0);
         motor.speed(RIGHT_MOTOR,0);
@@ -283,7 +342,6 @@ bool detectCollision(){
     * Motor : Left Motor
 
 */
-
 void reverse(){
    motor.speed(LEFT_MOTOR,0);
    motor.speed(RIGHT_MOTOR,0);
