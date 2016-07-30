@@ -24,8 +24,7 @@
 #define REVERSE 'R' //This is when we go straight backwards
 #define UNDEFINED 'U'
 #define NUMCHECKPOINTS 7
-#define SMALLREVERSETIME 1000 //Threshold for straight reverse vs. U turn 
-
+#define SMALLREVERSETIME 2000 //Threshold for straight reverse vs. U turn 
 
 int checkpoint; // Checkpoints on the map that the robot wishes to reach
 int counter; // Displaying driving stats
@@ -86,12 +85,11 @@ void navigate(){
     }
 
     // Make decisions at intersection
-    int paths = detectValidPaths();
-    if (paths != 999){  // If there a direction other than forward
-       timeLastIntersection = millis();
-       int shape = getShape(cN,dir); //Intersection shape
-       if (shape == paths){nav_Intersection();}
-       else {nav_Lost(paths);}  //Figure out where the hell we are
+    if (detectIntersection(turnDir)){ // See if we need to turn
+      timeLastIntersection = millis(); // Update turn
+      updateParameters(cN_p, fN.pop(), dir_p); // Account for the new position at the intersection.
+      turn(turnDir); 
+      turnDir = UNDEFINED; // Clear the turn direction
     }
 
     // Detect passenger
@@ -162,7 +160,7 @@ void navigate(){
     else{
       followTape();
       counter = counter + 1;
-      /*if (counter == 20){
+      if (counter == 20){
         LCD.clear();
         LCD.setCursor(0,0);
         LCD.print("cN:");
@@ -175,8 +173,8 @@ void navigate(){
         LCD.print(" turn:");
         LCD.print(turnDir);
         counter = 0;
-      }*/
-      if (counter == 20){
+      }
+      /*if (counter == 20){
         LCD.clear();
         LCD.setCursor(0,0);
         LCD.print("L: ");
@@ -184,7 +182,7 @@ void navigate(){
         LCD.setCursor(0,1);
         LCD.print("R: ");
         LCD.print(analogRead(RIGHT_IR));
-      }
+      }*/
       
     }
   }

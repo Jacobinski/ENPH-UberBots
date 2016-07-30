@@ -274,6 +274,7 @@ void turn(char dir){
       int V = vel; // Velocity for turn
       bool stopTurn = false;
 
+        //This is a left-hand reverse turn
         motor.speed(LEFT_MOTOR,-V);
         motor.speed(RIGHT_MOTOR,0);
         delay(500); //Reverse for 0.3 sec
