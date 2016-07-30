@@ -49,5 +49,7 @@ void setup() {
 }
 
 void loop() {
-  navigate();  
+  navigate();
+  //motor.speed(LEFT_MOTOR,65); //left
+  //motor.speed(RIGHT_MOTOR,65); //right  
 }
