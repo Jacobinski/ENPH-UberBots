@@ -1,10 +1,3 @@
-/*#define LEFT_INTERSECTION 0
-#define RIGHT_INTERSECTION 2
-#define LEFT_MOTOR 0
-#define RIGHT_MOTOR 1
-#define LEFT_TAPE 4
-#define RIGHT_TAPE 5*/
-
 /*  Enables an external interrupt pin
 INTX: Which interrupt should be configured?
     INT0    - will trigger ISR(INT0_vect)

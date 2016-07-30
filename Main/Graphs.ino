@@ -54,6 +54,61 @@ const int nodeDistance[NODES][NODES] = //Non-zero values are valid connections (
   {0,0,0,0,0,0,0,0,0,0,0,0,115,0,0,0,0,99,0,87}, // Node 19
   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,87,0}  // Node 20
 };
+const char validDirections[NODES][DIRECTIONS] =
+{
+  //NORTH, EAST, SOUTH, WEST
+  {'U','U','S','U'}, // Node 1
+  {'N','E','S','U'}, // Node 2
+  {'N','E','U','U'}, // Node 3
+  {'N','E','U','W'}, // Node 4
+  {'N','E','S','W'}, // Node 5
+  {'N','U','S','W'}, // Node 6
+  {'U','E','U','U'}, // Node 7
+  {'U','U','S','U'}, // Node 8
+  {'N','U','S','W'}, // Node 9
+  {'N','E','U','W'}, // Node 10
+  {'U','U','S','U'}, // Node 11
+  {'N','E','S','U'}, // Node 12
+  {'N','E','S','W'}, // Node 13
+  {'N','E','S','U'}, // Node 14
+  {'U','U','S','U'}, // Node 15
+  {'U','U','U','W'}, // Node 16
+  {'N','E','U','W'}, // Node 17
+  {'N','U','U','W'}, // Node 18
+  {'N','U','S','W'}, // Node 19
+  {'U','U','S','U'}  // Node 20
+};
+const int intersectionShapes[NODES][DIRECTIONS] = 
+{
+  //0 -> Nothing expected (Invalid direction of approach || end node)
+  //1 -> Forward, Left, Right 
+  //2 -> Forward, Right
+  //3 -> Forward, Left
+  //4 -> Left, Right
+  //5 -> Right
+  //6 -> Left
+  //N , E , S , W
+  { 0 , 0 , 0 , 0 }, // Node 1
+  { 2 , 0 , 3 , 4 }, // Node 2
+  { 0 , 0 , 6 , 5 }, // Node 3
+  { 0 , 3 , 4 , 2 }, // Node 4
+  { 1 , 1 , 1 , 1 }, // Node 5
+  { 3 , 4 , 2 , 0 }, // Node 6
+  { 0 , 0 , 0 , 0 }, // Node 7
+  { 0 , 0 , 0 , 0 }, // Node 8
+  { 3 , 4 , 2 , 0 }, // Node 9
+  { 0 , 3 , 4 , 2 }, // Node 10
+  { 0 , 0 , 0 , 0 }, // Node 11
+  { 2 , 0 , 3 , 4 }, // Node 12
+  { 1 , 1 , 1 , 1 }, // Node 13
+  { 2 , 0 , 3 , 4 }, // Node 14
+  { 0 , 0 , 0 , 0 }, // Node 15
+  { 0 , 0 , 0 , 0 }, // Node 16
+  { 0 , 3 , 4 , 2 }, // Node 17
+  { 0 , 6 , 5 , 0 }, // Node 18
+  { 3 , 4 , 2 , 0 }, // Node 19
+  { 0 , 0 , 0 , 0 }  // Node 20
+};
 const char nodeDirections[NODES][NODES] = //Defined from edges LEAVING the [x][] position
 {  
   {'U','S','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U'}, // Node 1
@@ -129,6 +184,39 @@ int getNode(int cN, char dir){
   for (int i=1;i<=NODES; i++){
     if (nodeDirections[cN-1][i-1] == dir) output = i;
   }
+  return output;
+}
+
+/*
+  Function: getShape
+
+  Description:
+  Takes inputs of an intersection node, and a direction. Will return
+  the shape that the robot expects to see upon arrival at that intersection.
+  The available "shapes" are as follows.
+
+  //0 -> Nothing expected (Invalid direction of approach || end node)
+  //1 -> Forward, Left, Right 
+  //2 -> Forward, Right
+  //3 -> Forward, Left
+  //4 -> Left, Right
+  //5 -> Right
+  //6 -> Left
+
+  Code Inputs:
+    * cN: (Int) Current node of the robot
+    * dir: (char) The direction of the robot
+  Code Outputs:
+    * output: (int) The shape in that direction. 0 if invalid
+*/
+int getShape(int cN, char dir){
+  int output = 0;
+  int dirInt = 999;
+  if (dir == NORTH) {dirInt = 0;}
+  if (dir == EAST) {dirInt = 1;}
+  if (dir == SOUTH) {dirInt = 2;}
+  if (dir == WEST) {dirInt = 3;}
+  output = intersectionShapes[cN-1][dirInt];
   return output;
 }
 
@@ -222,8 +310,6 @@ void updateParameters(int *cN, int fN, char *dir){
                  on top of the stack.
 */
 StackList<int> pathFind(int start, int finish, char direction){
-  // The collision will be set to 0 if no collision, or the node value
-  // where a collision was detected, allowing no link to be made between
   // cN and collisionNode for a direct path.  
   // Return an array of nodes between cN and fN
   // This is an implementation of Dijkstra's algorithm
@@ -274,8 +360,97 @@ StackList<int> pathFind(int start, int finish, char direction){
     // Check to see if we will redo this loop
     cN = nextNode;
     check[cN-1] = true;
-    if (cN == fN)
-      done = true;
+    if (cN == fN){done = true;}
+    if (nextLen == 999) {done = true;} //Nothing left 
+  }
+
+  bool stackLoop = false;
+  while (stackLoop != true){
+      output.push(cN);
+      if (cN == sN){
+        stackLoop = true;
+        output.pop(); //Get rid of the cN = start entry
+      }else{
+        cN = prev[cN-1];
+      }
+  }
+  return output;
+}
+
+/*
+  Function: pathFind_noFwd
+
+  Description:
+  This function will find the shortest distance by using the Dijkstra
+  algorithm. It will use the distance[][] array above for determining
+  distances. It will avoid reversing by considering the current 
+  direction of the robot. It will not travel forward
+
+  Code Inputs:
+    * start: The current node of the robot (node that the robot is approaching)
+    * finish: The desired final node of the robot.
+    * direction: The current direction of the robot
+  Code Outputs:
+    * StackList: A stack of future commands. The first to be executed will be 
+                 on top of the stack.
+*/
+StackList<int> pathFind_noFwd(int start, int finish, char direction){
+  // cN and collisionNode for a direct path.  
+  // Return an array of nodes between cN and fN
+  // This is an implementation of Dijkstra's algorithm
+
+  StackList <int> output;
+  int sN = start; // Start node
+  int cN = start; // Current node
+  int fN = finish; // Finish node
+  bool done = false;
+  bool check[20]; // Nodes already checked
+  int dist[20]; // Distances from start to each node
+  int prev[20]; // Best connection to previous node
+  int distance[20][20]; 
+  for(int a=0;a<20;a++){for(int b=0;b<20;b++){distance[a][b]=nodeDistance[a][b];}} //Copy nodeDistance to clean array
+  for(int c=0;c<20;c++){check[c]=false;dist[c]=999;prev[c]=999;} //Assign above array values
+
+  dist[cN-1] = 0; // Initialize the distance from start -> start = 0
+  check[cN-1] = true; // Starting node is checked
+
+  //Set the forward direction to be impossible by modifying distance[][]
+  int fwd = getNode(start,direction);
+  distance[start-1][fwd-1] = 0; // Never go forward (guaranteed to exist as this function is only called upon straight reverse)
+
+  //Set the reverse direction to be impossible by modifying distance[][]
+  char rev = UNDEFINED;
+  if (direction == NORTH) {rev = SOUTH;}
+  if (direction == SOUTH) {rev = NORTH;}
+  if (direction == EAST) {rev = WEST;}
+  if (direction == WEST) {rev = EAST;}
+  int bck = getNode(start,rev);
+  if (bck != 999){distance[start-1][bck-1] = 0;} // Can never go backwards (if backwards exists, 999 is the not-existing value)
+    
+  while (done != true){
+    // Obtain lengths from current node to adjacent nodes -> replace distance if smaller than current value.
+    for(int i = 1; i <= NODES; i++){ 
+      int len = distance[cN-1][i-1]; // length. Note: Distance is a global variable 
+      if(len != 0 && (dist[cN-1] + len) < dist[i-1] ){
+          dist[i-1] = dist[cN-1] + len;
+          prev[i-1] = cN; 
+      }
+    }
+    // Find the next minimum node length. If this it the final node, end the algorithm.
+    int nextNode;
+    int nextLen = 999; 
+    for(int j = 1; j <= NODES; j++){ 
+      int nodeLen = dist[j-1];
+      if (check[j-1] == false && nodeLen < nextLen){ //Prevents backwards travel & finds the shortest next node
+        nextLen = nodeLen;
+        nextNode = j; 
+      }
+    }
+    // Check to see if we will redo this loop
+    cN = nextNode;
+    check[cN-1] = true;
+    if (cN == fN){done = true;}
+    if (nextLen == 999) {done = true;} //Nothing left 
   }
 
   bool stackLoop = false;
