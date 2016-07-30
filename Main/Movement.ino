@@ -371,3 +371,14 @@ void reverse(){
    motor.speed(RIGHT_MOTOR,0); 
 }
 
+double distanceTraveled(int turnCount){
+  double distanceTraveled;
+  //distanceTraveled = (wheelCircumference)*(turnCount)/(CountsPerRev); //TODO: test to find values for this
+  return distanceTraveled;
+}
+
+void resetWheelCounters(){
+  leftWheelCounter = 0;
+  rightWheelCounter = 0;
+}
+
