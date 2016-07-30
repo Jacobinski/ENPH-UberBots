@@ -29,10 +29,10 @@
 #define R_i 5
 #define L_i 6
 
-int lmthresh = 35; //Threshold before left QRD detects paper 
-int rmthresh = 33; //Threshold before right QRD detects paper
-int lithresh = 60;
-int rithresh = 29;
+int lmthresh = 40; //Threshold before left QRD detects paper 
+int rmthresh = 40; //Threshold before right QRD detects paper
+int lithresh = 100;
+int rithresh = 100;
 double error = 0; //Current Error
 double lasterr = 0; //Previous Error (i.e One time step ago)
 double recerr = 0; //Error in Last Tape State (i.e. was on -1, now is on 0)
@@ -152,16 +152,17 @@ int detectValidPaths(){
   bool R_path = false;
   bool F_path = false;
   int output = 999; // 999 is the continue on value
-  int t = 250; // Overshoot time
+  int t = 150; // Overshoot time
+  int corr = 0;
   
-  if(analogRead(LEFT_INTERSECTION) > lithresh){L_path = true;}  
-  if(analogRead(RIGHT_INTERSECTION) > rithresh){R_path = true;}
+  if(analogRead(LEFT_INTERSECTION) > lithresh){L_path = true; corr -= 2;}  
+  if(analogRead(RIGHT_INTERSECTION) > rithresh){R_path = true; corr += 2; }
 
   if(L_path == true || R_path == true){
    int ti = millis(); //Initial time
    int tf = millis(); //Final time
-   motor.speed(LEFT_MOTOR,vel+con); //left
-   motor.speed(RIGHT_MOTOR,vel-con); //right
+   motor.speed(LEFT_MOTOR,vel+corr); //left
+   motor.speed(RIGHT_MOTOR,vel-corr); //right
    while(analogRead(LEFT_INTERSECTION) > lithresh || analogRead(RIGHT_INTERSECTION) > rithresh){
       // Keep on overshooting the intersection
    }
@@ -172,8 +173,8 @@ int detectValidPaths(){
         followTape();
       }
       else{
-        motor.speed(LEFT_MOTOR,vel); //left
-        motor.speed(RIGHT_MOTOR,vel); //right
+        motor.speed(LEFT_MOTOR,vel+corr); //left
+        motor.speed(RIGHT_MOTOR,vel-corr); //right
       }
       tf = millis(); 
     }

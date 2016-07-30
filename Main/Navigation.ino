@@ -89,9 +89,8 @@ void navigate(){
     int paths = detectValidPaths();
     if (paths != 999){  // If there a direction other than forward
        timeLastIntersection = millis();
-       if(turnDir == LEFT && (paths == 1 || paths == 3 || paths == 4 || paths == 6)) {nav_Intersection();}
-       else if(turnDir == RIGHT && (paths == 1 || paths == 2 || paths == 4 || paths == 5)) {nav_Intersection();}
-       else if(turnDir == FORWARD && (paths == 1 || paths == 2 || paths == 3)) {nav_Intersection();}
+       int shape = getShape(cN,dir); //Intersection shape
+       if (shape == paths){nav_Intersection();}
        else {nav_Lost(paths);}  //Figure out where the hell we are
     }
 
@@ -157,56 +156,13 @@ void navigate(){
        }
       // --------------------------------------------------------------------- END ------------------------------------------------------------------------------------------------------------
       passenger = true;
-      StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
-      StackList <int> dropoff_path2 = pathFind(cN,17,dir);
-      turnDir = UNDEFINED; //Reset turn
-      if(dropoff_path1.isEmpty() && dropoff_path2.isEmpty()){ //If no available path, turn around
-         turn(BACKWARD);
-         char cD = dir;  //get current Direction
-         if (cD == NORTH) {dir = SOUTH;}
-         if (cD == SOUTH) {dir = NORTH;}
-         if (cD == EAST) {dir = WEST;}
-         if (cD == WEST) {dir = EAST;}
-         int nxt = getNode(cN,dir);
-         updateParameters(cN_p, nxt, dir_p);
-         StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
-         StackList <int> dropoff_path2 = pathFind(cN,17,dir);
-      }
-      while(!fN.isEmpty()) {fN.pop();} //Clear the fN list 
-      //Case 1: At node 17
-      if(cN == 17){
-        fN.push(4);
-        checkpoint = 2; 
-      }
-      //Case 2: At node 4
-      else if(cN == 4){
-        fN.push(17);
-        checkpoint = 0;
-      }
-      //Case 3: Closer to node 4
-      else if(dropoff_path1.count() < dropoff_path2.count()){
-          while(!dropoff_path1.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path1.peek());fN.push(dropoff_path1.pop());delay(500);} 
-          fN.push(17); //Direction to face
-          checkpoint = 2; 
-      }
-      //Case 4: Closer to node 17
-      else if(dropoff_path2.count() < dropoff_path1.count()){
-          while(!dropoff_path2.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path2.peek());fN.push(dropoff_path2.pop());delay(500);} 
-          fN.push(4); //Direction to face
-          checkpoint = 0; 
-      }
-      else{
-        LCD.clear();
-        LCD.home();
-        LCD.print("Cant find dest");
-        delay(2000);
-      }
+      while(!fN.isEmpty()) {fN.pop();} //Clear the fN list
     }
     // Default
     else{
       followTape();
       counter = counter + 1;
-      if (counter == 20){
+      /*if (counter == 20){
         LCD.clear();
         LCD.setCursor(0,0);
         LCD.print("cN:");
@@ -219,7 +175,17 @@ void navigate(){
         LCD.print(" turn:");
         LCD.print(turnDir);
         counter = 0;
+      }*/
+      if (counter == 20){
+        LCD.clear();
+        LCD.setCursor(0,0);
+        LCD.print("L: ");
+        LCD.print(analogRead(LEFT_IR));
+        LCD.setCursor(0,1);
+        LCD.print("R: ");
+        LCD.print(analogRead(RIGHT_IR));
       }
+      
     }
   }
   if (fN.isEmpty()){  
@@ -236,8 +202,49 @@ void navigate(){
            updateParameters(cN_p, nxt, dir_p);
            turnDir = UNDEFINED; //Reset turn
        }  
-       // If we have a passenger, drop it off
-       if (passenger == true){ 
+       // If we have a passenger at the end point, drop it off
+       if ((passenger == true) && (cN != 4 || cN != 17)){ 
+          StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
+          StackList <int> dropoff_path2 = pathFind(cN,17,dir);
+          turnDir = UNDEFINED; //Reset turn
+          if(dropoff_path1.isEmpty() && dropoff_path2.isEmpty()){ //If no available path, turn around
+             turn(BACKWARD);
+             char cD = dir;  //get current Direction
+             if (cD == NORTH) {dir = SOUTH;}
+             if (cD == SOUTH) {dir = NORTH;}
+             if (cD == EAST) {dir = WEST;}
+             if (cD == WEST) {dir = EAST;}
+             int nxt = getNode(cN,dir);
+             updateParameters(cN_p, nxt, dir_p);
+             StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
+             StackList <int> dropoff_path2 = pathFind(cN,17,dir);
+          }
+          while(!fN.isEmpty()) {fN.pop();} //Clear the fN list 
+          //Case 1: At node 17
+          if(cN == 17){
+            fN.push(4);
+            checkpoint = 2; 
+          }
+          //Case 2: At node 4
+          else if(cN == 4){
+            fN.push(17);
+            checkpoint = 0;
+          }
+          //Case 3: Closer to node 4
+          else if(dropoff_path1.count() < dropoff_path2.count()){
+              while(!dropoff_path1.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path1.peek());fN.push(dropoff_path1.pop());delay(500);} 
+              fN.push(17); //Direction to face
+              checkpoint = 2; 
+          }
+          //Case 4: Closer to node 17
+          else if(dropoff_path2.count() < dropoff_path1.count()){
+              while(!dropoff_path2.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path2.peek());fN.push(dropoff_path2.pop());delay(500);} 
+              fN.push(4); //Direction to face
+              checkpoint = 0; 
+          }
+       } 
+       // If we have a passenger at the end point, drop it off
+       if ((passenger == true) && (cN == 4 || cN == 17)){ 
           int ti = millis(); //Initial time
           int tf = millis(); //Final time
           while (tf-ti < 1500){ //Go forward for 1.5 seconds
@@ -286,7 +293,6 @@ void navigate(){
             RCServo0.write(90); //Position of the base starts in the middle
             RCServo2.write(0); //Claw starts open
           }
-        
           //-------------------------------------------------------------------------------------------  
        }  
         motor.stop(LEFT_MOTOR);

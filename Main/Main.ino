@@ -21,10 +21,10 @@
 #define DERIVATIVE 6 //Analog Input (Don't plug anything in)
 #define LEFT_INTERSECTION 5 //Analog Input
 #define RIGHT_INTERSECTION 1 //Analog Input
-#define LEFT_TAPE 3 //Analog Input
-#define RIGHT_TAPE 4 //Analog Input
-#define LEFT_FWD_COLLISION 12 //Digital Input
-#define RIGHT_FWD_COLLISION 3 //Digital Input
+#define LEFT_TAPE 4 //Analog Input
+#define RIGHT_TAPE 3 //Analog Input
+#define LEFT_FWD_COLLISION 7 //Digital Input
+#define RIGHT_FWD_COLLISION 5 //Digital Input
 #define STOP_BUTTON 1 //Digital Input
 #define detectionPin_passenger1 4 //Digital Input
 #define detectionPin_passenger2 6 //Digital Input
