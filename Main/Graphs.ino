@@ -132,6 +132,29 @@ const char nodeDirections[NODES][NODES] = //Defined from edges LEAVING the [x][]
   {'U','U','U','U','U','U','U','U','U','U','U','U','W','U','U','U','U','S','U','N'}, // Node 19
   {'U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','U','S','U'}  // Node 20
 };
+const int averageWheelDistances[NODES][NODES] = //Non-zero values are valid connections (cm) -> These are
+{
+  {0,87,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 1
+  {87,0,99,0,115,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 2
+  {0,99,0,132,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 3
+  {0,0,132,0,74,0,0,0,0,0,0,0,0,0,0,0,183,0,0,0}, // Node 4
+  {0,115,0,74,0,66,0,0,65,0,0,0,0,0,0,0,0,0,0,0}, // Node 5
+  {0,0,0,0,66,0,68,89,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 6
+  {0,0,0,0,0,68,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 7
+  {0,0,0,0,0,89,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // Node 8
+  {0,0,0,0,65,0,0,0,0,90,0,140,0,0,0,0,0,0,0,0}, // Node 9
+  {0,0,0,0,0,0,0,0,90,0,57,90,0,0,0,0,0,0,0,0}, // Node 10
+  {0,0,0,0,0,0,0,0,0,57,0,0,0,0,0,0,0,0,0,0}, // Node 11
+  {0,0,0,0,0,0,0,0,140,90,0,0,65,0,0,0,0,0,0,0}, // Node 12
+  {0,0,0,0,0,0,0,0,0,0,0,65,0,66,0,0,74,0,115,0}, // Node 13
+  {0,0,0,0,0,0,0,0,0,0,0,0,66,0,89,68,0,0,0,0}, // Node 14
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,89,0,0,0,0,0,0}, // Node 15
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,68,0,0,0,0,0,0}, // Node 16
+  {0,0,0,183,0,0,0,0,0,0,0,0,74,0,0,0,0,132,0,0}, // Node 17
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,132,0,99,0}, // Node 18
+  {0,0,0,0,0,0,0,0,0,0,0,0,115,0,0,0,0,99,0,87}, // Node 19
+  {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,87,0}  // Node 20
+};
 
 /*
   Function: getDirection
@@ -217,6 +240,24 @@ int getShape(int cN, char dir){
   if (dir == SOUTH) {dirInt = 2;}
   if (dir == WEST) {dirInt = 3;}
   output = intersectionShapes[cN-1][dirInt];
+  return output;
+}
+
+/*
+  Function: getDistance
+
+  Description:
+  Takes inputs of the current and future nodes, and returns the expected
+  distance the robot has to travel to reach its destination.
+
+  Code Inputs:
+    * cN: (Int) Current node of the robot
+    * fN: (Int) Future node of the robot
+  Code Outputs:
+    * Output: (Int) Expected distance to between nodes
+*/
+int getDistance(int cN, int fN){
+  int output = averageWheelDistances[cN-1][fN-1];
   return output;
 }
 

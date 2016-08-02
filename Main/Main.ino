@@ -39,17 +39,17 @@ void setup() {
   
   //Set pin mode for microswitch passenger detection
   pinMode(detectionPin_passenger1, INPUT);
-  digitalWrite(detectionPin_passenger1, LOW);
   pinMode(detectionPin_passenger2, INPUT);
+  digitalWrite(detectionPin_passenger1, LOW);
   digitalWrite(detectionPin_passenger2, LOW);
   
   enableExternalInterrupt(INT1,LOW);
-  nav_init();
+  enableExternalInterrupt(INT2, FALLING); // Left wheel interupt
+  enableExternalInterrupt(INT3, FALLING); // Right wheel interupt
+  initialize();
   Serial.begin(9600); Serial.println("Start code");
 }
 
 void loop() {
   navigate();
-  //motor.speed(LEFT_MOTOR,65); //left
-  //motor.speed(RIGHT_MOTOR,65); //right  
 }

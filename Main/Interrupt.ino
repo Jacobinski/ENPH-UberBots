@@ -10,10 +10,12 @@ mode: Which pin state should trigger the interrupt?
     RISING  - trigger when pin state changes from LOW  to HIGH 
 */
 volatile unsigned int INT_1 = 0; //Stop button interupts -> Opens menu
+volatile unsigned int INT_2 = 0;  //Encoder interupt -> check wheel counts 
+volatile unsigned int INT_3 = 0;  //Encoder interupt -> check wheel counts 
 
 void enableExternalInterrupt(unsigned int INTX, unsigned int mode)
 {
-  if (INTX > 51 || mode > 3 || mode == 1) return; //Return if unreasonable input
+  if (INTX > 5 || mode > 3 || mode == 1) return; //Return if unreasonable input
   cli();
   /* Allow pin to trigger interrupts        */
   EIMSK |= (1 << INTX);
@@ -28,7 +30,7 @@ void enableExternalInterrupt(unsigned int INTX, unsigned int mode)
 /* Disables an external interrupt pin */
 void disableExternalInterrupt(unsigned int INTX)
 {
-  if (INTX > 51) return;
+  if (INTX > 5) return;
   EIMSK &= ~(1 << INTX);
 }
 
@@ -61,3 +63,14 @@ ISR(INT1_vect)
   }
 }
 
+//Left wheel counter
+ISR(INT2_vect){
+  delay(2);
+  if(digitalRead(2) == LOW) {leftWheelCounter++;} //debounce
+}
+
+//Right wheel counter
+ISR(INT3_vect){
+  delay(2);
+  if(digitalRead(3) == LOW) {rightWheelCounter++;} //debounce
+}

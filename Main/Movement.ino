@@ -92,6 +92,32 @@ void followTape(){
    lasterr=error;
 }
 
+/*
+  Function: followTape
+
+  Description:
+  This function uses PID control to allow the robot to follow the tape. 
+  Modifications have been put forth to allow for continued straight 
+  following in the event of no forward path. This was done by removing
+  the derivative parameter. This is the modification that allows
+  for intersection shape to be determined.
+*/
+void followTapeIntersection(){
+
+  int kd = knob(DERIVATIVE)/4; //Derivative Gain Multiplier 
+  int kp = knob(PROPORTIONAL)/4; //Proportional Gain Multiplier
+  int left = analogRead(LEFT_TAPE); //Left QRD Signal
+  int right = analogRead(RIGHT_TAPE); //Right QRD Signal
+
+   if ((left>lmthresh)&&(right>rmthresh)) error = 0;
+   if ((left>lmthresh)&&(right<rmthresh)) error = -1;
+   if ((left<lmthresh)&&(right>rmthresh)) error = +1;
+   if ((left<lmthresh)&&(right<rmthresh)){}//Do nothing
+     
+   p=kp*error;
+   motor.speed(LEFT_MOTOR,vel+p); //left
+   motor.speed(RIGHT_MOTOR,vel-p); //right
+}
 
 /*
   Function: detectIntersection
@@ -373,3 +399,12 @@ void reverse(){
    motor.speed(RIGHT_MOTOR,0); 
 }
 
+double distanceTraveled(int turnCount){
+  double distanceTraveled = (3.14*(7.622)/ 48.0)* turnCount; // Where 7.6cm is the diameter, and we have a 2:1 gear ratio 24CPR encoder
+  return distanceTraveled;
+}
+
+void resetWheelCounters(){
+  leftWheelCounter = 0;
+  rightWheelCounter = 0;
+}

@@ -29,6 +29,9 @@
 int checkpoint; // Checkpoints on the map that the robot wishes to reach
 int counter; // Displaying driving stats
 int timeLastIntersection; // Time at last intersection
+int leftWheelCounter; // Counts left wheel encoder
+int rightWheelCounter; // Counts right wheel encoder
+bool lost; // If the robot is lost, this is true
 bool smallreverse; //Determines if we just did a small reverse. This is for pathFinding purposes
 bool passenger; // Passenger carrying status
 bool collision; // Collision flag
@@ -39,10 +42,13 @@ QueueList <int> fN; // Holds all of the future nodes (fN) in memory
 
 const int checkpointNodes[NUMCHECKPOINTS] = {1,7,11,16,20,18,3};
 
-void nav_init(){
+void initialize(){
   passenger = false;
   collision = false;
   smallreverse = false;
+  lost = false;
+  leftWheelCounter = 0;
+  rightWheelCounter = 0;
   timeLastIntersection = millis();
   turnDir = UNDEFINED;
   counter = 0;
@@ -66,7 +72,7 @@ void nav_init(){
       }
   }
   RCServo1.write(180); //Arm starts up
-  delay(1000);
+  delay(700);
   RCServo0.write(90); //Position of the base starts in the middle
   RCServo2.write(0); //Claw starts open
 }
@@ -87,80 +93,40 @@ void navigate(){
     // Make decisions at intersection
     if (detectIntersection(turnDir)){ // See if we need to turn
       timeLastIntersection = millis(); // Update turn
+      resetWheelCounters();
       updateParameters(cN_p, fN.pop(), dir_p); // Account for the new position at the intersection.
       turn(turnDir); 
       turnDir = UNDEFINED; // Clear the turn direction
     }
 
-    // Detect passenger
+    // Detect passenger -> Quadruple check to avoid noise
     double left_ir = analogRead(LEFT_IR);
     double right_ir = analogRead(RIGHT_IR);
-    if (((left_ir*5.0/1024.0) > 1.5 || (right_ir*5.0/1024.0) > 1.5)){
+    if (((left_ir*5.0/1024.0) > 0.5 || (right_ir*5.0/1024.0) > 0.5)){
       for(int i=0; i<4;i++){
         left_ir = left_ir + analogRead(LEFT_IR);
         right_ir = right_ir + analogRead(RIGHT_IR);
       }
     }
-    
+    // Check the quadruple read
     if (((left_ir*5.0/1024.0) > IR_THRESH || (right_ir*5.0/1024.0) > IR_THRESH) && passenger == false){
-      LCD.clear(); LCD.setCursor(0,0); LCD.print("L IR:"); LCD.print(left_ir*5.0/1024.0); LCD.setCursor(0,1); LCD.print("R IR:"); LCD.print(right_ir*5.0/1024.0);
-      motor.speed(LEFT_MOTOR,0);
-      motor.speed(RIGHT_MOTOR,0);
-      delay(2000);
-      
-      // --------------------------------------------------------------------- Jenny's arm function --------------------------------------------------------------------------------------------
-        if((left_ir*5.0/1024.0) > IR_THRESH){
-          //Base rotation - Find the direction of the strongest IR signal
-          LCD.clear(); LCD.print("Rotation"); delay(1000);
-          RCServo0.write(160);
-          //Arm height - lower arm to height of passenger
-          LCD.clear(); LCD.print("Lowering arm"); delay(1000);
-          RCServo1.write(30);
-          //Claw closing
-          LCD.clear(); LCD.print("Closing claw"); delay(1000);
-          RCServo2.write(52);
-          //Microswitch detection of passenger
-          if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
-            LCD.clear(); LCD.print("Passenger"); delay(1000);
-          }
-          //lift arm
-          LCD.clear(); LCD.print("Lifting arm"); delay(1000); 
-          RCServo1.write(180);
-          //Rotate base
-          LCD.clear(); LCD.print("Rotation"); delay(1000);
-          RCServo0.write(90);   
-       }
-
-        if((right_ir*5.0/1024.0) > IR_THRESH){
-          //Base rotation - Find the direction of the strongest IR signal
-          LCD.clear(); LCD.print("Rotation"); delay(1000);
-          RCServo0.write(0);
-          //Arm height - lower arm to height of passenger
-          LCD.clear(); LCD.print("Lowering arm"); delay(1000);
-          RCServo1.write(30); 
-          //Claw closing
-          LCD.clear(); LCD.print("Closing claw"); delay(1000);
-          RCServo2.write(52);
-          //Microswitch detection of passenger
-          if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
-            LCD.clear(); LCD.print("Passenger"); delay(1000);
-          }
-          //lift arm
-          LCD.clear(); LCD.print("Lifting arm"); delay(1000);
-          RCServo1.write(180);
-          //Rotate base
-          LCD.clear(); LCD.print("Rotation"); delay(1000);
-          RCServo0.write(90);         
-       }
-      // --------------------------------------------------------------------- END ------------------------------------------------------------------------------------------------------------
-      passenger = true;
-      while(!fN.isEmpty()) {fN.pop();} //Clear the fN list
+      armPickup();
     }
     // Default
     else{
       followTape();
       counter = counter + 1;
       if (counter == 20){
+        LCD.clear();
+        LCD.setCursor(0,0);
+        LCD.print("L: ");
+        LCD.print(distanceTraveled(leftWheelCounter));
+        LCD.setCursor(0,1);
+        LCD.print("R: ");
+        LCD.print(distanceTraveled(rightWheelCounter));
+        counter = 0;
+      }
+      /*if (counter == 20){
         LCD.clear();
         LCD.setCursor(0,0);
         LCD.print("cN:");
@@ -173,7 +139,7 @@ void navigate(){
         LCD.print(" turn:");
         LCD.print(turnDir);
         counter = 0;
-      }
+      }*/
       /*if (counter == 20){
         LCD.clear();
         LCD.setCursor(0,0);
@@ -200,7 +166,7 @@ void navigate(){
            updateParameters(cN_p, nxt, dir_p);
            turnDir = UNDEFINED; //Reset turn
        }  
-       // If we have a passenger at the end point, drop it off
+       // If we have a passenger not at the end point, find an endpoint
        if ((passenger == true) && (cN != 4 || cN != 17)){ 
           StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
           StackList <int> dropoff_path2 = pathFind(cN,17,dir);
@@ -230,87 +196,43 @@ void navigate(){
           }
           //Case 3: Closer to node 4
           else if(dropoff_path1.count() < dropoff_path2.count()){
-              while(!dropoff_path1.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path1.peek());fN.push(dropoff_path1.pop());delay(500);} 
+              while(!dropoff_path1.isEmpty()){fN.push(dropoff_path1.pop());} 
               fN.push(17); //Direction to face
               checkpoint = 2; 
           }
           //Case 4: Closer to node 17
           else if(dropoff_path2.count() < dropoff_path1.count()){
-              while(!dropoff_path2.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path2.peek());fN.push(dropoff_path2.pop());delay(500);} 
+              while(!dropoff_path2.isEmpty()){fN.push(dropoff_path2.pop());} 
               fN.push(4); //Direction to face
               checkpoint = 0; 
           }
        } 
        // If we have a passenger at the end point, drop it off
        if ((passenger == true) && (cN == 4 || cN == 17)){ 
-          int ti = millis(); //Initial time
-          int tf = millis(); //Final time
-          while (tf-ti < 1500){ //Go forward for 1.5 seconds
-            followTape();
-            tf = millis();
-          }
-          motor.speed(LEFT_MOTOR,0);
-          motor.speed(RIGHT_MOTOR,0);
-          passenger = false;
-          
-          //DROP OFF PASSENGER - Jenny-------------------------------------------------------------------
-          if(dir == EAST){
-            //Rotate base
-            LCD.clear(); LCD.print("Rotation"); delay(1000);
-            RCServo0.write(0);
-            //Lower arm
-            LCD.clear(); LCD.print("Lowering Arm"); delay(1000);
-            RCServo1.write(30);
-            //open claw
-            LCD.clear(); LCD.print("Opening claw"); delay(1000);
-            RCServo2.write(0);
-            delay(500);
-            //reset
-            LCD.clear(); LCD.print("Reset"); delay(1000);
-            RCServo1.write(180); //Arm starts up
-            delay(1000);
-            RCServo0.write(90); //Position of the base starts in the middle
-            RCServo2.write(0); //Claw starts open
-          }
-
-          if(dir == WEST){
-            //Rotate base
-            LCD.clear(); LCD.print("Rotation"); delay(1000);
-            RCServo0.write(150);
-            //Lower arm
-            LCD.clear(); LCD.print("Lowering Arm"); delay(1000);
-            RCServo1.write(30);
-            //open claw
-            LCD.clear(); LCD.print("Opening claw"); delay(1000);
-            RCServo2.write(0);
-            delay(500);
-            //reset
-            LCD.clear(); LCD.print("Reset"); delay(1000);
-            RCServo1.write(180); //Arm starts up
-            delay(1000);
-            RCServo0.write(90); //Position of the base starts in the middle
-            RCServo2.write(0); //Claw starts open
-          }
-          //-------------------------------------------------------------------------------------------  
+         armDropOff();
        }  
-        motor.stop(LEFT_MOTOR);
-        motor.stop(RIGHT_MOTOR);
-        if (collision == true  && smallreverse == false){
-          StackList <int> path = pathFind(cN,checkpointNodes[checkpoint],dir); 
-          while(!path.isEmpty()){fN.push(path.pop());}  
-          collision = false; //NOTE: If path is empty, we will return to this fN.isEmpty() immediately, and move onto the next checkpoint in the below else if{}
-        }
-        else if (collision == true && smallreverse == true){
-          StackList <int> path = pathFind_noFwd(cN,checkpointNodes[checkpoint],dir); 
-          while(!path.isEmpty()){fN.push(path.pop());}  
-          smallreverse = false;
-          collision = false;
-        }
-        else if (collision == false){
-          checkpoint = (checkpoint+1) % NUMCHECKPOINTS; // Cycle checkpoints
-          StackList <int> path = pathFind(cN,checkpointNodes[checkpoint],dir); 
-          while(!path.isEmpty()){fN.push(path.pop());}  
-        }
+
+       // If we don't have a passenger, either we have a collision -> reroute, or we just need a new route -> determine route
+       motor.stop(LEFT_MOTOR);
+       motor.stop(RIGHT_MOTOR);
+       if (collision == true  && smallreverse == false){
+         StackList <int> path = pathFind(cN,checkpointNodes[checkpoint],dir); 
+         while(!path.isEmpty()){fN.push(path.pop());}  
+         collision = false; //NOTE: If path is empty, we will return to this fN.isEmpty() immediately, and move onto the next checkpoint in the below else if{}
+       }
+       else if (collision == true && smallreverse == true){
+         //Turn left -> figure out which line we will be on. Get reverse node -> find what is "left" of it
+
+         //StackList <int> path = pathFind_noFwd(cN,checkpointNodes[checkpoint],dir); 
+         //while(!path.isEmpty()){fN.push(path.pop());}  
+         smallreverse = false;
+         collision = false;
+       }
+       else if (collision == false){
+         checkpoint = (checkpoint+1) % NUMCHECKPOINTS; // Cycle checkpoints
+         StackList <int> path = pathFind(cN,checkpointNodes[checkpoint],dir); 
+         while(!path.isEmpty()){fN.push(path.pop());}  
+       }
     }
   else{
       motor.stop_all();
@@ -372,6 +294,126 @@ void nav_Intersection(){
   turn(turnDir); 
   turnDir = UNDEFINED; // Clear the turn direction
 }
+
+/*
+  Function: armPickup
+
+  Description:
+  This function is to be called when the robot's arm is to aquire a passenger.
+  It will stop the vehicle, decide the direction to pick up the passenger, set
+  passenger = true, and clear the future nodes.
+*/
+void armPickup(){
+  LCD.clear(); LCD.setCursor(0,0); LCD.print("L IR:"); LCD.print(left_ir*5.0/1024.0); LCD.setCursor(0,1); LCD.print("R IR:"); LCD.print(right_ir*5.0/1024.0);
+  motor.speed(LEFT_MOTOR,0);
+  motor.speed(RIGHT_MOTOR,0);
+  delay(2000);
+      
+  if((left_ir*5.0/1024.0) > IR_THRESH){
+    //Base rotation - Find the direction of the strongest IR signal
+    LCD.clear(); LCD.print("Rotation"); delay(1000);
+    RCServo0.write(160);
+    //Arm height - lower arm to height of passenger
+    LCD.clear(); LCD.print("Lowering arm"); delay(1000);
+    RCServo1.write(30);
+    //Claw closing
+    LCD.clear(); LCD.print("Closing claw"); delay(1000);
+    RCServo2.write(52);
+    //Microswitch detection of passenger
+    if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
+      LCD.clear(); LCD.print("Passenger"); delay(1000);
+    }
+    //lift arm
+    LCD.clear(); LCD.print("Lifting arm"); delay(1000); 
+    RCServo1.write(180);
+    //Rotate base
+    LCD.clear(); LCD.print("Rotation"); delay(1000);
+    RCServo0.write(90);   
+   }
+   else if((right_ir*5.0/1024.0) > IR_THRESH){
+     //Base rotation - Find the direction of the strongest IR signal
+     LCD.clear(); LCD.print("Rotation"); delay(1000);
+     RCServo0.write(0);
+     //Arm height - lower arm to height of passenger
+     LCD.clear(); LCD.print("Lowering arm"); delay(1000);
+     RCServo1.write(30); 
+     //Claw closing
+     LCD.clear(); LCD.print("Closing claw"); delay(1000);
+     RCServo2.write(52);
+     //Microswitch detection of passenger
+     if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
+       LCD.clear(); LCD.print("Passenger"); delay(1000);
+     }
+     //lift arm
+     LCD.clear(); LCD.print("Lifting arm"); delay(1000);
+     RCServo1.write(180);
+     //Rotate base
+     LCD.clear(); LCD.print("Rotation"); delay(1000);
+     RCServo0.write(90);         
+   }
+   passenger = true;
+   while(!fN.isEmpty()) {fN.pop();} //Clear the fN list
+}
+
+/*
+  Function: armDropOff
+
+  Description:
+  This function is to be called when the robot is in the region between node 4 & 17
+  ready for a drop-off to be made. It will automatically drive to the middle of the map
+  using a time-delay and drop off the passenger, updating passenger = false.
+*/
+void armDropOff(){
+  int ti = millis(); //Initial time
+  int tf = millis(); //Final time
+  while (tf-ti < 1500){ //Go forward for 1.5 seconds
+    if(detectCollision()){nav_Collision(); break;} //Deal with collisions
+    followTape();
+    tf = millis();
+  }
+  motor.speed(LEFT_MOTOR,0);
+  motor.speed(RIGHT_MOTOR,0);
+  passenger = false;
+
+  if(dir == EAST){
+    //Rotate base
+    LCD.clear(); LCD.print("Rotation"); delay(1000);
+    RCServo0.write(0);
+    //Lower arm
+    LCD.clear(); LCD.print("Lowering Arm"); delay(1000);
+    RCServo1.write(30);
+    //open claw
+    LCD.clear(); LCD.print("Opening claw"); delay(1000);
+    RCServo2.write(0);
+    delay(500);
+    //reset
+    LCD.clear(); LCD.print("Reset"); delay(1000);
+    RCServo1.write(180); //Arm starts up
+    delay(1000);
+    RCServo0.write(90); //Position of the base starts in the middle
+    RCServo2.write(0); //Claw starts open
+  }
+
+  if(dir == WEST){
+    //Rotate base
+    LCD.clear(); LCD.print("Rotation"); delay(1000);
+    RCServo0.write(150);
+    //Lower arm
+    LCD.clear(); LCD.print("Lowering Arm"); delay(1000);
+    RCServo1.write(30);
+    //open claw
+    LCD.clear(); LCD.print("Opening claw"); delay(1000);
+    RCServo2.write(0);
+    delay(500);
+    //reset
+    LCD.clear(); LCD.print("Reset"); delay(1000);
+    RCServo1.write(180); //Arm starts up
+    delay(1000);
+    RCServo0.write(90); //Position of the base starts in the middle
+    RCServo2.write(0); //Claw starts open
+  } 
+}
+
 
 /*
   Function: nav_Lost
@@ -445,6 +487,3 @@ void nav_Lost(int intsct){
     intsct = detectValidPaths(); // What type of intersection are we at
   }
 }
-
-
-
