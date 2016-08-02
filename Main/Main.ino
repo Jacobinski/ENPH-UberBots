@@ -38,6 +38,8 @@
 int leftWheelCounter = 0;
 int rightWheelCounter = 0;
 
+int cat = 0;
+
 void setup() {
   #include <phys253setup.txt>
 
@@ -52,16 +54,24 @@ void setup() {
   digitalWrite(DETECTION_SWITCH2, LOW);
   
   enableExternalInterrupt(INT1,LOW);
-  enableExternalInterrupt(INT2, RISING);
-  nav_init();
+  enableExternalInterrupt(INT2, FALLING);
+  //nav_init();
   Serial.begin(9600); Serial.println("Start code");
 }
 
 void loop() {
-  //navigate();  
-  LCD.clear();
-  LCD.print("Count");
-  LCD.setCursor(0, 1);
-  LCD.print(leftWheelCounter);
-  
+  motor.speed(LEFT_MOTOR, 65);
+  motor.speed(RIGHT_MOTOR, 65);
+  cat++;
+  followTape();
+  if(cat = 300){ 
+    LCD.clear();
+    LCD.setCursor(0,0);
+    LCD.print("Count: ");
+    LCD.print(leftWheelCounter);
+    LCD.setCursor(0,1);
+    LCD.print("Distance: ");
+    LCD.print(distanceTraveled(leftWheelCounter));
+    cat = 0;
+  }
 }

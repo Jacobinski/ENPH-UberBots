@@ -372,7 +372,7 @@ void reverse(){
 }
 
 double distanceTraveled(int turnCount){
-  double distanceTraveled;
+  double distanceTraveled = (3.14*(7.622)/ 24.0)* turnCount;    //(2*pi*r^2/24) * 2 (to account for high->low per tick) 
   //distanceTraveled = (wheelCircumference)*(turnCount)/(CountsPerRev); //TODO: test to find values for this
   return distanceTraveled;
 }
