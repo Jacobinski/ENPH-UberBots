@@ -277,7 +277,7 @@ void turn(char dir){
         //This is a left-hand reverse turn
         motor.speed(LEFT_MOTOR,-V);
         motor.speed(RIGHT_MOTOR,0);
-        delay(500); //Reverse for 0.3 sec
+        delay(1000); //Reverse for 0.3 sec
         //MAYBE OVERSHOOT TO SEE IF NEAR AN INTERSECTION, THEN PULL FORWARD AND DO THE TURN
         while(stopTurn == false){
           if(i % 2 == 1){
