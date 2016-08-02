@@ -28,7 +28,22 @@
 #define STOP_BUTTON 1 //Digital Input
 #define detectionPin_passenger1 4 //Digital Input
 #define detectionPin_passenger2 6 //Digital Input
-#define IR_THRESH 3 //Volts
+#define IR_THRESH 6 //Volts
+
+int checkpoint; // Checkpoints on the map that the robot wishes to reach
+int counter; // Displaying driving stats
+int timeLastIntersection; // Time at last intersection
+int leftWheelCounter; // Counts left wheel encoder
+int rightWheelCounter; // Counts right wheel encoder
+bool lost; // If the robot is lost, this is true
+bool smallreverse; //Determines if we just did a small reverse. This is for pathFinding purposes
+bool drop; // This will tell us if we are ready to dropOff
+bool passenger; // Passenger carrying status
+bool collision; // Collision flag
+char turnDir; // The direction of the next turn
+char dir;  char* dir_p; // Direction, N,S,E,W
+int cN;    int* cN_p; // Holds the current node (cN) in memory -> Node which robot is approaching
+QueueList <int> fN; // Holds all of the future nodes (fN) in memory
 
 void setup() {
   #include <phys253setup.txt>

@@ -26,20 +26,6 @@
 #define NUMCHECKPOINTS 7
 #define SMALLREVERSETIME 2000 //Threshold for straight reverse vs. U turn 
 
-int checkpoint; // Checkpoints on the map that the robot wishes to reach
-int counter; // Displaying driving stats
-int timeLastIntersection; // Time at last intersection
-int leftWheelCounter; // Counts left wheel encoder
-int rightWheelCounter; // Counts right wheel encoder
-bool lost; // If the robot is lost, this is true
-bool smallreverse; //Determines if we just did a small reverse. This is for pathFinding purposes
-bool passenger; // Passenger carrying status
-bool collision; // Collision flag
-char turnDir; // The direction of the next turn
-char dir;  char* dir_p; // Direction, N,S,E,W
-int cN;    int* cN_p; // Holds the current node (cN) in memory -> Node which robot is approaching
-QueueList <int> fN; // Holds all of the future nodes (fN) in memory
-
 const int checkpointNodes[NUMCHECKPOINTS] = {1,7,11,16,20,18,3};
 
 void initialize(){
@@ -47,6 +33,7 @@ void initialize(){
   collision = false;
   smallreverse = false;
   lost = false;
+  drop = false;
   leftWheelCounter = 0;
   rightWheelCounter = 0;
   timeLastIntersection = millis();
@@ -91,27 +78,27 @@ void navigate(){
     }
 
     // Make decisions at intersection
-    int paths = detectValidPaths();
+    /*int paths = detectValidPaths();
     if (paths != 999){  // If there a direction other than forward
        timeLastIntersection = millis();
        int shape = getShape(cN,dir); //Intersection shape
        if (shape == paths){nav_Intersection();}
        else {nav_Lost(paths);}  //Figure out where the hell we are
-    }
+    }*/
 
     // Make decisions at intersection
-    /*if (detectIntersection(turnDir)){ // See if we need to turn
+    if (detectIntersection(turnDir)){ // See if we need to turn
       timeLastIntersection = millis(); // Update turn
       resetWheelCounters();
       updateParameters(cN_p, fN.pop(), dir_p); // Account for the new position at the intersection.
       turn(turnDir); 
       turnDir = UNDEFINED; // Clear the turn direction
-    }*/
+    }
 
     // Detect passenger -> Quadruple check to avoid noise
     double left_ir = analogRead(LEFT_IR);
     double right_ir = analogRead(RIGHT_IR);
-    if (((left_ir*5.0/1024.0) > 0.5 || (right_ir*5.0/1024.0) > 0.5)){
+    if (((left_ir*5.0/1024.0) > 1.0 || (right_ir*5.0/1024.0) > 1.0)){
       for(int i=0; i<4;i++){
         left_ir = left_ir + analogRead(LEFT_IR);
         right_ir = right_ir + analogRead(RIGHT_IR);
@@ -119,13 +106,13 @@ void navigate(){
     }
     // Check the quadruple read
     if (((left_ir*5.0/1024.0) > IR_THRESH || (right_ir*5.0/1024.0) > IR_THRESH) && passenger == false){
-      armPickup();
+      armPickup(left_ir,right_ir);
     }
     // Default
     else{
       followTape();
       counter = counter + 1;
-      if (counter == 20){
+      /*if (counter == 20){
         LCD.clear();
         LCD.setCursor(0,0);
         LCD.print("L: ");
@@ -134,8 +121,8 @@ void navigate(){
         LCD.print("R: ");
         LCD.print(distanceTraveled(rightWheelCounter));
         counter = 0;
-      }
-      /*if (counter == 20){
+      }*/
+      if (counter == 20){
         LCD.clear();
         LCD.setCursor(0,0);
         LCD.print("cN:");
@@ -148,7 +135,7 @@ void navigate(){
         LCD.print(" turn:");
         LCD.print(turnDir);
         counter = 0;
-      }*/
+      }
       /*if (counter == 20){
         LCD.clear();
         LCD.setCursor(0,0);
@@ -176,7 +163,8 @@ void navigate(){
            turnDir = UNDEFINED; //Reset turn
        }  
        // If we have a passenger not at the end point, find an endpoint
-       if ((passenger == true) && (cN != 4 || cN != 17)){ 
+       if (passenger == true && drop == false){
+          drop = true; 
           StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
           StackList <int> dropoff_path2 = pathFind(cN,17,dir);
           turnDir = UNDEFINED; //Reset turn
@@ -192,8 +180,7 @@ void navigate(){
              StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
              StackList <int> dropoff_path2 = pathFind(cN,17,dir);
           }
-          while(!fN.isEmpty()) {fN.pop();} //Clear the fN list 
-          //Case 1: At node 17
+         //Case 1: At node 17
           if(cN == 17){
             fN.push(4);
             checkpoint = 2; 
@@ -217,7 +204,7 @@ void navigate(){
           }
        } 
        // If we have a passenger at the end point, drop it off
-       if ((passenger == true) && (cN == 4 || cN == 17)){ 
+       if ((passenger == true) && drop == true){ 
          armDropOff();
        }  
 
@@ -231,9 +218,8 @@ void navigate(){
        }
        else if (collision == true && smallreverse == true){
          //Turn left -> figure out which line we will be on. Get reverse node -> find what is "left" of it
-
-         //StackList <int> path = pathFind_noFwd(cN,checkpointNodes[checkpoint],dir); 
-         //while(!path.isEmpty()){fN.push(path.pop());}  
+         StackList <int> path = pathFind_noFwd(cN,checkpointNodes[checkpoint],dir); 
+         while(!path.isEmpty()){fN.push(path.pop());}  
          smallreverse = false;
          collision = false;
        }
@@ -312,7 +298,7 @@ void nav_Intersection(){
   It will stop the vehicle, decide the direction to pick up the passenger, set
   passenger = true, and clear the future nodes.
 */
-void armPickup(){
+void armPickup(int left_ir, int right_ir){
   LCD.clear(); LCD.setCursor(0,0); LCD.print("L IR:"); LCD.print(left_ir*5.0/1024.0); LCD.setCursor(0,1); LCD.print("R IR:"); LCD.print(right_ir*5.0/1024.0);
   motor.speed(LEFT_MOTOR,0);
   motor.speed(RIGHT_MOTOR,0);
@@ -376,14 +362,14 @@ void armDropOff(){
   int ti = millis(); //Initial time
   int tf = millis(); //Final time
   while (tf-ti < 1500){ //Go forward for 1.5 seconds
-    if(detectCollision()){nav_Collision(); break;} //Deal with collisions
+    if(detectCollision()){nav_Collision(); drop = false; return;} //Deal with collisions
     followTape();
     tf = millis();
   }
   motor.speed(LEFT_MOTOR,0);
   motor.speed(RIGHT_MOTOR,0);
   passenger = false;
-
+  
   if(dir == EAST){
     //Rotate base
     LCD.clear(); LCD.print("Rotation"); delay(1000);
@@ -441,7 +427,8 @@ void armDropOff(){
 void nav_Lost(int intsct){
   bool found = false; // Are we still lost?
   bool fourInt = false; // Have we found the four-way intersection?
-
+  int cat = 0; //Counter variable
+ 
   //Clear variables
   dir = UNDEFINED;
   cN = 999;
@@ -453,20 +440,37 @@ void nav_Lost(int intsct){
 
   while (found == false){
     if (intsct != 999 && fourInt == false){
-      if (intsct == LFR_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LFR I"); delay(0); fourInt = true; turn(RIGHT);}
-      else if (intsct == FR_i || intsct == LR_i || intsct == R_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LR FR R"); delay(000); turn(RIGHT);}
-      else if (intsct == LF_i || intsct == L_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LF L"); delay(000); turn(LEFT);}
+       LCD.clear(); LCD.setCursor(0,0);
+          if(intsct == 1){LCD.print("F L R");}
+          if(intsct == 2){LCD.print("F R");}
+          if(intsct == 3){LCD.print("F L");}
+          if(intsct == 4){LCD.print("L R");}
+          if(intsct == 5){LCD.print("R");}
+          if(intsct == 6){LCD.print("L");}
+          LCD.setCursor(0,1);
+          if(fourInt == true){LCD.print("Intersection");}
+      if (intsct == 1) {fourInt = true; turn(RIGHT);}
+      else if (intsct == 2 || intsct == 4 || intsct == 5) {turn(RIGHT);}
+      else if (intsct == 3 || intsct == 6) {turn(LEFT);}
     }
     else if (intsct != 999 && fourInt == true){
-      if (intsct == LR_i){ //Turn around and try again
+       LCD.clear(); LCD.setCursor(0,0);
+          if(intsct == 1){LCD.print("F L R");}
+          if(intsct == 2){LCD.print("F R");}
+          if(intsct == 3){LCD.print("F L");}
+          if(intsct == 4){LCD.print("L R");}
+          if(intsct == 5){LCD.print("R");}
+          if(intsct == 6){LCD.print("L");}
+          LCD.setCursor(0,1);
+          if(fourInt == true){LCD.print("Intersection");}
+      if (intsct == 4){ //Turn around and try again
         motor.speed(LEFT_MOTOR,-vel); motor.speed(RIGHT_MOTOR,-vel);
-        delay(500);
+        delay(1000);
         motor.speed(LEFT_MOTOR,0); motor.speed(RIGHT_MOTOR,0);
-        LCD.clear(); LCD.setCursor(0,0); LCD.print("LR I"); delay(000);
         turn(BACKWARD);
       }
-      if (intsct == LFR_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LFR I"); delay(000); turn(RIGHT);} //We just arrived from reverse
-      if (intsct == LF_i) {
+      if (intsct == 1) {turn(RIGHT);} //We just arrived from reverse
+      if (intsct == 3) {
         turn(LEFT);
         cN = 7;
         dir = WEST;
@@ -474,7 +478,7 @@ void nav_Lost(int intsct){
         found = true;
         LCD.clear(); LCD.home(); LCD.print("FOUND 7"); 
       }
-      if (intsct == FR_i) {
+      if (intsct == 2) {
         turn(RIGHT);
         cN = 16;
         dir = EAST;
@@ -494,7 +498,7 @@ void nav_Lost(int intsct){
       }
       // Check the quadruple read
       if (((left_ir*5.0/1024.0) > IR_THRESH || (right_ir*5.0/1024.0) > IR_THRESH) && passenger == false){
-        armPickup();
+        armPickup(left_ir,right_ir);
       }
       else if(detectCollision()){
         turn(BACKWARD);

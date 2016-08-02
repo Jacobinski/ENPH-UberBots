@@ -110,8 +110,8 @@ void followTapeIntersection(){
   int right = analogRead(RIGHT_TAPE); //Right QRD Signal
 
    if ((left>lmthresh)&&(right>rmthresh)) error = 0;
-   if ((left>lmthresh)&&(right<rmthresh)) error = -1;
-   if ((left<lmthresh)&&(right>rmthresh)) error = +1;
+   if ((left>lmthresh)&&(right<rmthresh)) error = -2;
+   if ((left<lmthresh)&&(right>rmthresh)) error = +2;
    if ((left<lmthresh)&&(right<rmthresh)){}//Do nothing
      
    p=kp*error;
@@ -178,7 +178,7 @@ int detectValidPaths(){
   bool R_path = false;
   bool F_path = false;
   int output = 999; // 999 is the continue on value
-  int t = 300; // Overshoot time
+  int t = 500; // Overshoot time
   int corr = 0;
   
   if(analogRead(LEFT_INTERSECTION) > lithresh){L_path = true; corr -= 2;}  
@@ -187,8 +187,6 @@ int detectValidPaths(){
   if(L_path == true || R_path == true){
    int ti = millis(); //Initial time
    int tf = millis(); //Final time
-   motor.speed(LEFT_MOTOR,vel+corr); //left
-   motor.speed(RIGHT_MOTOR,vel-corr); //right
    while(analogRead(LEFT_INTERSECTION) > lithresh || analogRead(RIGHT_INTERSECTION) > rithresh){
       followTapeIntersection();  //Weak take following -> no derivative
    }
@@ -238,6 +236,7 @@ void turn(char dir){
    int ti; //Initial turn time
    int tf; //Final turn time
    int turnTime = 600; //ms
+   delay(100); //Overshoot
 
    if (dir == LEFT){
       motor.speed(LEFT_MOTOR,-vel); //left
@@ -297,7 +296,7 @@ void turn(char dir){
         //This is a left-hand reverse turn
         motor.speed(LEFT_MOTOR,-V);
         motor.speed(RIGHT_MOTOR,0);
-        delay(500); //Reverse for 0.3 sec
+        delay(800); //Reverse for 0.3 sec
         //MAYBE OVERSHOOT TO SEE IF NEAR AN INTERSECTION, THEN PULL FORWARD AND DO THE TURN
         while(stopTurn == false){
           if(i % 2 == 1){
