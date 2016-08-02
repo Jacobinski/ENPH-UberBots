@@ -91,13 +91,22 @@ void navigate(){
     }
 
     // Make decisions at intersection
-    if (detectIntersection(turnDir)){ // See if we need to turn
+    int paths = detectValidPaths();
+    if (paths != 999){  // If there a direction other than forward
+       timeLastIntersection = millis();
+       int shape = getShape(cN,dir); //Intersection shape
+       if (shape == paths){nav_Intersection();}
+       else {nav_Lost(paths);}  //Figure out where the hell we are
+    }
+
+    // Make decisions at intersection
+    /*if (detectIntersection(turnDir)){ // See if we need to turn
       timeLastIntersection = millis(); // Update turn
       resetWheelCounters();
       updateParameters(cN_p, fN.pop(), dir_p); // Account for the new position at the intersection.
       turn(turnDir); 
       turnDir = UNDEFINED; // Clear the turn direction
-    }
+    }*/
 
     // Detect passenger -> Quadruple check to avoid noise
     double left_ir = analogRead(LEFT_IR);
@@ -444,19 +453,19 @@ void nav_Lost(int intsct){
 
   while (found == false){
     if (intsct != 999 && fourInt == false){
-      if (intsct == LFR_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LFR I"); delay(2000); fourInt = true; turn(RIGHT);}
-      else if (intsct == FR_i || intsct == LR_i || intsct == R_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LR FR R"); delay(2000); turn(RIGHT);}
-      else if (intsct == LF_i || intsct == L_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LF L"); delay(2000); turn(LEFT);}
+      if (intsct == LFR_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LFR I"); delay(0); fourInt = true; turn(RIGHT);}
+      else if (intsct == FR_i || intsct == LR_i || intsct == R_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LR FR R"); delay(000); turn(RIGHT);}
+      else if (intsct == LF_i || intsct == L_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LF L"); delay(000); turn(LEFT);}
     }
     else if (intsct != 999 && fourInt == true){
       if (intsct == LR_i){ //Turn around and try again
         motor.speed(LEFT_MOTOR,-vel); motor.speed(RIGHT_MOTOR,-vel);
         delay(500);
         motor.speed(LEFT_MOTOR,0); motor.speed(RIGHT_MOTOR,0);
-        LCD.clear(); LCD.setCursor(0,0); LCD.print("LR I"); delay(2000);
+        LCD.clear(); LCD.setCursor(0,0); LCD.print("LR I"); delay(000);
         turn(BACKWARD);
       }
-      if (intsct == LFR_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LFR I"); delay(2000); turn(RIGHT);} //We just arrived from reverse
+      if (intsct == LFR_i) {LCD.clear(); LCD.setCursor(0,0); LCD.print("LFR I"); delay(000); turn(RIGHT);} //We just arrived from reverse
       if (intsct == LF_i) {
         turn(LEFT);
         cN = 7;
@@ -475,12 +484,22 @@ void nav_Lost(int intsct){
       }
     }
     else{
-      if(fourInt == true){LCD.clear(); LCD.setCursor(0,0); LCD.print("T");}
-      else{LCD.clear(); LCD.setCursor(0,0); LCD.print("F");}
-      
-      if(detectCollision()){
+      double left_ir = analogRead(LEFT_IR);
+      double right_ir = analogRead(RIGHT_IR);
+      if (((left_ir*5.0/1024.0) > 0.5 || (right_ir*5.0/1024.0) > 0.5)){
+        for(int i=0; i<4;i++){
+          left_ir = left_ir + analogRead(LEFT_IR);
+          right_ir = right_ir + analogRead(RIGHT_IR);
+        }
+      }
+      // Check the quadruple read
+      if (((left_ir*5.0/1024.0) > IR_THRESH || (right_ir*5.0/1024.0) > IR_THRESH) && passenger == false){
+        armPickup();
+      }
+      else if(detectCollision()){
         turn(BACKWARD);
-      } else {
+      } 
+      else {
         followTape();
       }
     }

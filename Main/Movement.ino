@@ -178,7 +178,7 @@ int detectValidPaths(){
   bool R_path = false;
   bool F_path = false;
   int output = 999; // 999 is the continue on value
-  int t = 150; // Overshoot time
+  int t = 300; // Overshoot time
   int corr = 0;
   
   if(analogRead(LEFT_INTERSECTION) > lithresh){L_path = true; corr -= 2;}  
@@ -190,18 +190,12 @@ int detectValidPaths(){
    motor.speed(LEFT_MOTOR,vel+corr); //left
    motor.speed(RIGHT_MOTOR,vel-corr); //right
    while(analogRead(LEFT_INTERSECTION) > lithresh || analogRead(RIGHT_INTERSECTION) > rithresh){
-      // Keep on overshooting the intersection
+      followTapeIntersection();  //Weak take following -> no derivative
    }
-   while(tf-ti < t){
+   while(tf-ti < t){  //Overshoot to see if we missed anything
       if(L_path == false){if(analogRead(LEFT_INTERSECTION) > lithresh){L_path = true;}}
       if(R_path == false){if(analogRead(RIGHT_INTERSECTION) > rithresh){R_path = true;}}
-      if(analogRead(LEFT_TAPE) > lmthresh || analogRead(RIGHT_TAPE) > rmthresh){
-        followTape();
-      }
-      else{
-        motor.speed(LEFT_MOTOR,vel+corr); //left
-        motor.speed(RIGHT_MOTOR,vel-corr); //right
-      }
+      followTapeIntersection(); 
       tf = millis(); 
     }
     motor.speed(LEFT_MOTOR,0); //left
