@@ -377,17 +377,21 @@ void navigate() {
 
       //DROP OFF PASSENGER - Jenny-------------------------------------------------------------------
       if (dir == EAST) {
-        //Rotate base
+        //Base rotation:
+        //rotates towards the direction of the drop off area
         LCD.clear(); LCD.print("Rotation"); delay(1000);
         RCServo0.write(0);
-        //Lower arm
+        //Arm height adjustment:
+        //lower arm for drop off
         LCD.clear(); LCD.print("Lowering Arm"); delay(1000);
         RCServo1.write(30);
-        //open claw
+        //Claw actuation:
+        //claw opens to drop off passenger
         LCD.clear(); LCD.print("Opening claw"); delay(1000);
         RCServo2.write(0);
         delay(500);
-        //reset
+        //Reset
+        //reset arm to initial position, in preparation to get new passenger
         LCD.clear(); LCD.print("Reset"); delay(1000);
         RCServo1.write(180); //Arm starts up
         delay(1000);
