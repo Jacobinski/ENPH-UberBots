@@ -275,7 +275,7 @@ void navigate(){
        else if (passenger == true){ 
           int ti = millis(); //Initial time
           int tf = millis(); //Final time
-          while (tf-ti < 1500){ //Go forward for 1.5 seconds
+          while (tf-ti < 3500){ //Go forward for 1.5 seconds
             followTape();
             tf = millis();
           }
