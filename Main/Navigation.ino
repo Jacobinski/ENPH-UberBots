@@ -492,6 +492,7 @@ void useArm(double left_ir, double right_ir){
               //rotate base towards the middle
               LCD.clear(); LCD.print("Rotation"); delay(1000);
               RCServo0.write(90);
+              passenger = true;
               tryNumber = 4;
             }
           }         
