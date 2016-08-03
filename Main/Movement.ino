@@ -41,7 +41,7 @@ double m = 0; //#Clock oulses in current state, relating to error
 double d; //PID Derivative. m = y/x = (error-lasterr)/(q+m)
 double p; //PID Proportional. 
 double con; //Control Applied = kd*d + kp*p;
-double vel = 80; // Current to motor
+double vel = 70; // Current to motor
 int t = 0; //Counter
 
 /*
@@ -63,8 +63,8 @@ int t = 0; //Counter
 */
 void followTape(){ 
 
-  int kd = 60;//knob(DERIVATIVE)/4; //Derivative Gain Multiplier 
-  int kp = 20;//knob(PROPORTIONAL)/4; //Proportional Gain Multiplier
+  int kd = knob(DERIVATIVE)/4; //Derivative Gain Multiplier 
+  int kp = knob(PROPORTIONAL)/4; //Proportional Gain Multiplier
   int left = analogRead(LEFT_TAPE); //Left QRD Signal
   int right = analogRead(RIGHT_TAPE); //Right QRD Signal
 
