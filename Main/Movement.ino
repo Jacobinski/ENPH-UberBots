@@ -278,7 +278,7 @@ void turn(char dir){
         //This is a left-hand reverse turn
         motor.speed(LEFT_MOTOR,-V);
         motor.speed(RIGHT_MOTOR,0);
-        delay(700); //Reverse for 0.3 sec
+        delay(500); //Reverse for 0.3 sec
         //MAYBE OVERSHOOT TO SEE IF NEAR AN INTERSECTION, THEN PULL FORWARD AND DO THE TURN
         while(stopTurn == false){
           if(i % 2 == 1){
@@ -286,8 +286,8 @@ void turn(char dir){
               motor.speed(RIGHT_MOTOR,0);
               ti = millis(); //Initial time
               tf = millis(); //Final time
-              while(tf-ti < 300){
-                if ( analogRead(LEFT_TAPE) > lmthresh || analogRead(RIGHT_TAPE) > rmthresh) stopTurn = true;
+              while(tf-ti < 500){
+                if ( analogRead(LEFT_TAPE) > lmthresh || analogRead(RIGHT_TAPE) > rmthresh) {stopTurn = true; break;}
                 tf = millis(); //Final time
               }
           } else {
@@ -295,8 +295,8 @@ void turn(char dir){
               motor.speed(RIGHT_MOTOR,V);
               ti = millis(); //Initial time
               tf = millis(); //Final time
-              while(tf-ti < 300){
-                if ( analogRead(LEFT_TAPE) > lmthresh || analogRead(RIGHT_TAPE) > rmthresh) stopTurn = true;
+              while(tf-ti < 500){
+                if ( analogRead(LEFT_TAPE) > lmthresh || analogRead(RIGHT_TAPE) > rmthresh) {stopTurn = true; break;}
                 tf = millis(); //Final time
               }
           }
@@ -313,12 +313,12 @@ void turn(char dir){
         motor.speed(RIGHT_MOTOR,0);
         lasterr = 5; //Set PID to compensate
 
-      ti = millis(); //Initial time
-      tf = millis(); //Final time
-      while(tf-ti < 50){ //Accelerate
-          followTape();
-          tf = millis(); //Final time
-      }
+      //ti = millis(); //Initial time
+      //tf = millis(); //Final time
+      //while(tf-ti < 50){ //Accelerate
+      //    followTape();
+      //    tf = millis(); //Final time
+      //}
    }
 }
 
