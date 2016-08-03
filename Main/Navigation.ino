@@ -390,7 +390,7 @@ void useArm(double left_ir, double right_ir){
           LCD.clear();
           LCD.print("Closing claw");
           delay(1000);
-          RCServo2.write(65);
+          RCServo2.write(75);
           
           //Microswitch detection of passenger
           if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
@@ -430,7 +430,7 @@ void useArm(double left_ir, double right_ir){
           LCD.clear();
           LCD.print("Closing claw");
           delay(1000);
-          RCServo2.write(65);
+          RCServo2.write(75);
           
           //Microswitch detection of passenger
           if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
