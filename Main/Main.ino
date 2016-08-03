@@ -1,8 +1,3 @@
-#include <motor.h>
-#include <phys253.h>
-#include <phys253pins.h>
-#include <ServoTINAH.h>
-
 #include <phys253.h>
 #include <avr/interrupt.h>
 #include <QueueList.h>  /* http://playground.arduino.cc/Code/QueueList */
@@ -26,17 +21,13 @@
 #define DERIVATIVE 6 //Analog Input (Don't plug anything in)
 #define LEFT_INTERSECTION 5 //Analog Input
 #define RIGHT_INTERSECTION 1 //Analog Input
-#define LEFT_TAPE 3 //Analog Input
-#define RIGHT_TAPE 4 //Analog Input
-#define LEFT_FWD_COLLISION 12 //Digital Input
-#define RIGHT_FWD_COLLISION 3 //Digital Input
+#define LEFT_TAPE 4 //Analog Input
+#define RIGHT_TAPE 3 //Analog Input
+#define LEFT_FWD_COLLISION 7 //Digital Input
+#define RIGHT_FWD_COLLISION 5 //Digital Input
 #define STOP_BUTTON 1 //Digital Input
-#define DETECTION_SWITCH1 4 //Digital Input
-#define DETECTION_SWITCH2 6 //Digital Input
-#define IR_THRESH 3 //Volts
-
-int leftWheelCounter = 0;
-int rightWheelCounter = 0;
+#define DETECTION_SWITCH 4 //Digital Input
+#define IR_THRESH 5 //Volts
 
 void setup() {
   #include <phys253setup.txt>
@@ -46,22 +37,14 @@ void setup() {
   ServoTINAH RCServo2; //Controls claw actuation
   
   //Set pin mode for microswitch passenger detection
-  pinMode(DETECTION_SWITCH1, INPUT);
-  digitalWrite(DETECTION_SWITCH1, LOW);
-  pinMode(DETECTION_SWITCH2, INPUT);
-  digitalWrite(DETECTION_SWITCH2, LOW);
+  pinMode(DETECTION_SWITCH, INPUT);
+  digitalWrite(DETECTION_SWITCH, LOW);
   
   enableExternalInterrupt(INT1,LOW);
-  enableExternalInterrupt(INT2, RISING);
   nav_init();
   Serial.begin(9600); Serial.println("Start code");
 }
 
 void loop() {
-  //navigate();  
-  LCD.clear();
-  LCD.print("Count");
-  LCD.setCursor(0, 1);
-  LCD.print(leftWheelCounter);
-  
+  navigate();  
 }
