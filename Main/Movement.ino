@@ -63,8 +63,8 @@ int t = 0; //Counter
 */
 void followTape(){ 
 
-  int kd = 60;//knob(DERIVATIVE)/4; //Derivative Gain Multiplier 
-  int kp = 20;//knob(PROPORTIONAL)/4; //Proportional Gain Multiplier
+  int kd = knob(DERIVATIVE)/4; //Derivative Gain Multiplier 
+  int kp = knob(PROPORTIONAL)/4; //Proportional Gain Multiplier
   int left = analogRead(LEFT_TAPE); //Left QRD Signal
   int right = analogRead(RIGHT_TAPE); //Right QRD Signal
 

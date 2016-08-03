@@ -456,7 +456,7 @@ void useArm(double left_ir, double right_ir){
               LCD.clear(); LCD.print("Retrying left");
               //Base rotation:
               //rotate base a bit left
-              RCServo0.write(15 + 15);
+              RCServo0.write(5 + 15);
               //Arm height adjustment:
               //lower arm to height of passenger
               RCServo1.write(30);
@@ -469,7 +469,7 @@ void useArm(double left_ir, double right_ir){
               LCD.clear(); LCD.print("Retrying right");
               //Base rotation:
               //rotate base a bit right
-              RCServo0.write(15 - 15);
+              RCServo0.write(5 - 15);
               //Arm height adjustment:
               //lower arm to height of passenger
               RCServo1.write(30);
