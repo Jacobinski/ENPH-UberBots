@@ -1,7 +1,6 @@
 /*
   Title:
   Movement
-
   Description:
   This tab is responsible for the interface between code and movement. It will 
   include functions that allow for PID tape following and turning of the robot.
@@ -46,11 +45,9 @@ int t = 0; //Counter
 
 /*
   Function: followTape
-
   Description:
   This function uses PID control to allow the robot to follow the tape. This will 
   only allow for straight-line following.
-
   Code Inputs:
     * None
   Code Outputs:
@@ -63,8 +60,8 @@ int t = 0; //Counter
 */
 void followTape(){ 
 
-  int kd = 60;//knob(DERIVATIVE)/4; //Derivative Gain Multiplier 
-  int kp = 20;//knob(PROPORTIONAL)/4; //Proportional Gain Multiplier
+  int kd = knob(DERIVATIVE)/4; //Derivative Gain Multiplier 
+  int kp = knob(PROPORTIONAL)/4; //Proportional Gain Multiplier
   int left = analogRead(LEFT_TAPE); //Left QRD Signal
   int right = analogRead(RIGHT_TAPE); //Right QRD Signal
 
@@ -95,11 +92,9 @@ void followTape(){
 
 /*
   Function: detectIntersection
-
   Description:
   This function returns if an intersection was detected. The direction
   of the intersection to be detected is passed to this function.
-
   Code Inputs:
     * dir: Character corresponding to which side QRD must detect
            the intersection. If F (forward) is passed to this function,
@@ -134,11 +129,9 @@ bool detectIntersection(char dir){
 
 /*
   Function: detectValidPaths
-
   Description:
   Rotates the robot corresponding to the turn direction given to the 
   function. This occurs by moving the wheels in opposite directions.
-
   Definitions:
     #define LFR 1  Left, Forward, Right
     #define FR 2   Foward, Right
@@ -198,11 +191,9 @@ int detectValidPaths(){
 
 /*
   Function: turn
-
   Description:
   Rotates the robot corresponding to the turn direction given to the 
   function. This occurs by moving the wheels in opposite directions.
-
   Code Inputs:
     * Direction: (char) LEFT, RIGHT, FOWARD, BACKWARD
   Code Outputs:
@@ -324,10 +315,8 @@ void turn(char dir){
 
 /*
   Function: detectCollision
-
   Description:
   Detects if the front bumper hit an object. Returns a boolean.
-
   Code Inputs:
     * None
   Code Outputs:
@@ -347,10 +336,8 @@ bool detectCollision(){
 
 /*
   Function: reverse
-
   Description:
   Runs the robot straight backwards until an intersection is detected.
-
   Code Inputs:
     * detectIntersection() function
   Code Outputs:
@@ -358,7 +345,6 @@ bool detectCollision(){
   TINAH Inputs:
     * Motor : Right Motor
     * Motor : Left Motor
-
 */
 void reverse(){
    motor.speed(LEFT_MOTOR,0);
@@ -373,18 +359,3 @@ void reverse(){
    motor.speed(LEFT_MOTOR,0); //Stop the motors again.
    motor.speed(RIGHT_MOTOR,0); 
 }
-
-<<<<<<< HEAD
-double distanceTraveled(int turnCount){
-  double distanceTraveled = (3.14*(7.622)/ 24.0)* turnCount;    //(2*pi*r^2/24) * 2 (to account for high->low per tick) 
-  //distanceTraveled = (wheelCircumference)*(turnCount)/(CountsPerRev); //TODO: test to find values for this
-  return distanceTraveled;
-}
-
-void resetWheelCounters(){
-  leftWheelCounter = 0;
-  rightWheelCounter = 0;
-}
-
-=======
->>>>>>> f3106b8db0fb00a9d3c2b72b21b498e4b4c90705

@@ -29,8 +29,6 @@
 #define DETECTION_SWITCH 4 //Digital Input
 #define IR_THRESH 5 //Volts
 
-int cat = 0;
-
 void setup() {
   #include <phys253setup.txt>
 
@@ -43,32 +41,10 @@ void setup() {
   digitalWrite(DETECTION_SWITCH, LOW);
   
   enableExternalInterrupt(INT1,LOW);
-<<<<<<< HEAD
-  enableExternalInterrupt(INT2, FALLING);
-  //nav_init();
-=======
   nav_init();
->>>>>>> f3106b8db0fb00a9d3c2b72b21b498e4b4c90705
   Serial.begin(9600); Serial.println("Start code");
 }
 
 void loop() {
-<<<<<<< HEAD
-  motor.speed(LEFT_MOTOR, 65);
-  motor.speed(RIGHT_MOTOR, 65);
-  cat++;
-  followTape();
-  if(cat = 300){ 
-    LCD.clear();
-    LCD.setCursor(0,0);
-    LCD.print("Count: ");
-    LCD.print(leftWheelCounter);
-    LCD.setCursor(0,1);
-    LCD.print("Distance: ");
-    LCD.print(distanceTraveled(leftWheelCounter));
-    cat = 0;
-  }
-=======
   navigate();  
->>>>>>> f3106b8db0fb00a9d3c2b72b21b498e4b4c90705
 }

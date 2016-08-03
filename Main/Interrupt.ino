@@ -10,15 +10,10 @@ mode: Which pin state should trigger the interrupt?
     RISING  - trigger when pin state changes from LOW  to HIGH 
 */
 volatile unsigned int INT_1 = 0; //Stop button interupts -> Opens menu
-<<<<<<< HEAD
-volatile unsigned int INT_2 = 0;  //Stop button interupt -> check wheel counts 
-volatile unsigned int INT_3 = 0;  //Stop button interupt -> check wheel counts 
-=======
->>>>>>> f3106b8db0fb00a9d3c2b72b21b498e4b4c90705
 
 void enableExternalInterrupt(unsigned int INTX, unsigned int mode)
 {
-  if (INTX > 5 || mode > 3 || mode == 1) return; //Return if unreasonable input
+  if (INTX > 51 || mode > 3 || mode == 1) return; //Return if unreasonable input
   cli();
   /* Allow pin to trigger interrupts        */
   EIMSK |= (1 << INTX);
@@ -33,7 +28,7 @@ void enableExternalInterrupt(unsigned int INTX, unsigned int mode)
 /* Disables an external interrupt pin */
 void disableExternalInterrupt(unsigned int INTX)
 {
-  if (INTX > 5) return;
+  if (INTX > 51) return;
   EIMSK &= ~(1 << INTX);
 }
 
@@ -65,18 +60,3 @@ ISR(INT1_vect)
     t = t + 1;
   }
 }
-
-<<<<<<< HEAD
-//Left wheel counter
-ISR(INT2_vect){
-  delay(3);
-  if(digitalRead(2) == LOW) {leftWheelCounter++;} //debounce
-}
-
-//Right wheel counter
-ISR(INT3_vect){
-  rightWheelCounter++; 
-}
-
-=======
->>>>>>> f3106b8db0fb00a9d3c2b72b21b498e4b4c90705
