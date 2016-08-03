@@ -41,7 +41,7 @@ double m = 0; //#Clock oulses in current state, relating to error
 double d; //PID Derivative. m = y/x = (error-lasterr)/(q+m)
 double p; //PID Proportional. 
 double con; //Control Applied = kd*d + kp*p;
-double vel = 65; // Current to motor
+double vel = 80; // Current to motor
 int t = 0; //Counter
 
 /*
@@ -63,8 +63,8 @@ int t = 0; //Counter
 */
 void followTape(){ 
 
-  int kd = knob(DERIVATIVE)/4; //Derivative Gain Multiplier 
-  int kp = knob(PROPORTIONAL)/4; //Proportional Gain Multiplier
+  int kd = 60;//knob(DERIVATIVE)/4; //Derivative Gain Multiplier 
+  int kp = 20;//knob(PROPORTIONAL)/4; //Proportional Gain Multiplier
   int left = analogRead(LEFT_TAPE); //Left QRD Signal
   int right = analogRead(RIGHT_TAPE); //Right QRD Signal
 
@@ -218,17 +218,18 @@ void turn(char dir){
    int ti; //Initial turn time
    int tf; //Final turn time
    int turnTime = 600; //ms
+   delay(50);
 
    if (dir == LEFT){
       motor.speed(LEFT_MOTOR,-vel); //left
       motor.speed(RIGHT_MOTOR,vel); //right
-      delay(400);
+      delay(200);
       ti = millis(); //Initial time
       tf = millis(); //Final time
       while(L < lmthresh){;
         L = analogRead(LEFT_TAPE);
         tf = millis(); //Final time
-        if(tf-ti>5000){  //Fix the turn
+        if(tf-ti>3000){  //Fix the turn
           motor.speed(LEFT_MOTOR,vel); //left
           motor.speed(RIGHT_MOTOR,-vel); //right
         }
@@ -244,13 +245,13 @@ void turn(char dir){
    else if (dir == RIGHT){
       motor.speed(LEFT_MOTOR,vel); //left
       motor.speed(RIGHT_MOTOR,-vel); //right
-      delay(400); //Pause for 0.5s
+      delay(200); //Pause for 0.5s
       ti = millis(); //Initial time
       tf = millis(); //Final time
       while(R < rmthresh){
           R = analogRead(RIGHT_TAPE);
           tf = millis(); //Final time
-          if(tf-ti>5000){  //Fix the turn
+          if(tf-ti>3000){  //Fix the turn
             motor.speed(LEFT_MOTOR,-vel); //left
             motor.speed(RIGHT_MOTOR,vel); //right
         }
@@ -267,7 +268,7 @@ void turn(char dir){
    else if (dir == FORWARD){
       motor.speed(LEFT_MOTOR,vel+con); //left
       motor.speed(RIGHT_MOTOR,vel-con); //right
-      delay(200); //Just pass the intersection
+      delay(100); //Just pass the intersection
    }
    else if (dir == BACKWARD){
       int i = 0; // Turn counter
@@ -277,7 +278,7 @@ void turn(char dir){
         //This is a left-hand reverse turn
         motor.speed(LEFT_MOTOR,-V);
         motor.speed(RIGHT_MOTOR,0);
-        delay(1000); //Reverse for 0.3 sec
+        delay(700); //Reverse for 0.3 sec
         //MAYBE OVERSHOOT TO SEE IF NEAR AN INTERSECTION, THEN PULL FORWARD AND DO THE TURN
         while(stopTurn == false){
           if(i % 2 == 1){

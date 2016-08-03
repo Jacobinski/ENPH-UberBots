@@ -100,13 +100,12 @@ void navigate(){
     // Detect passenger
     double left_ir = analogRead(LEFT_IR);
     double right_ir = analogRead(RIGHT_IR);
-    if (((left_ir*5.0/1024.0) > 1.5 || (right_ir*5.0/1024.0) > 1.5)){
+    if (((left_ir*5.0/1024.0) > 1.0 || (right_ir*5.0/1024.0) > 1.0)){
       for(int i=0; i<4;i++){
         left_ir = left_ir + analogRead(LEFT_IR);
         right_ir = right_ir + analogRead(RIGHT_IR);
       }
     }
-    
     if (((left_ir*5.0/1024.0) > IR_THRESH || (right_ir*5.0/1024.0) > IR_THRESH) && passenger == false){
       LCD.clear();
       LCD.setCursor(0,0);
@@ -117,103 +116,24 @@ void navigate(){
       LCD.print(right_ir*5.0/1024.0);
       motor.speed(LEFT_MOTOR,0);
       motor.speed(RIGHT_MOTOR,0);
-      delay(3000);
-      
-      // --------------------------------------------------------------------- Jenny's arm function --------------------------------------------------------------------------------------------
-        if((left_ir*5.0/1024.0) > IR_THRESH){
-          //Base rotation - Find the direction of the strongest IR signal
-          LCD.clear();
-          LCD.print("Rotation");
-          delay(1000);
-          RCServo0.write(150);
-        
-          //Arm height - lower arm to height of passenger
-          LCD.clear();
-          LCD.print("Lowering arm");
-          delay(1000);
-          RCServo1.write(30);
-        
-          //Claw closing
-          LCD.clear();
-          LCD.print("Closing claw");
-          delay(1000);
-          RCServo2.write(52);
-          
-          //Microswitch detection of passenger
-          if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
-            LCD.clear();
-            LCD.print("Passenger");
-            delay(1000);
-          }
-          
-          //lift arm
-          LCD.clear();
-          LCD.print("Lifting arm");
-          delay(1000);
-          RCServo1.write(180);
-          
-          //Rotate base
-          LCD.clear();
-          LCD.print("Rotation");
-          delay(1000);
-          RCServo0.write(90);
-              
-       }
 
-        if((right_ir*5.0/1024.0) > IR_THRESH){
-          //Base rotation - Find the direction of the strongest IR signal
-          LCD.clear();
-          LCD.print("Rotation");
-          delay(1000);
-          RCServo0.write(0);
-        
-          //Arm height - lower arm to height of passenger
-          LCD.clear();
-          LCD.print("Lowering arm");
-          delay(1000);
-          RCServo1.write(30);
-        
-          //Claw closing
-          LCD.clear();
-          LCD.print("Closing claw");
-          delay(1000);
-          RCServo2.write(52);
-          
-          //Microswitch detection of passenger
-          if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
-            LCD.clear();
-            LCD.print("Passenger");
-            delay(1000);
-          }
-          
-          //lift arm
-          LCD.clear();
-          LCD.print("Lifting arm");
-          delay(1000);
-          RCServo1.write(180);
-          
-          //Rotate base
-          LCD.clear();
-          LCD.print("Rotation");
-          delay(1000);
-          RCServo0.write(90);         
-       }
-      // --------------------------------------------------------------------- END ------------------------------------------------------------------------------------------------------------
+      useArm(left_ir,right_ir);
       passenger = true;
+      
       StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
       StackList <int> dropoff_path2 = pathFind(cN,17,dir);
       turnDir = UNDEFINED; //Reset turn
       if(dropoff_path1.isEmpty() && dropoff_path2.isEmpty()){ //If no available path, turn around
-       turn(BACKWARD);
-       char cD = dir;  //get current Direction
-       if (cD == NORTH) {dir = SOUTH;}
-       if (cD == SOUTH) {dir = NORTH;}
-       if (cD == EAST) {dir = WEST;}
-       if (cD == WEST) {dir = EAST;}
-       int nxt = getNode(cN,dir);
-       updateParameters(cN_p, nxt, dir_p);
-       StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
-       StackList <int> dropoff_path2 = pathFind(cN,17,dir);
+         turn(BACKWARD);
+         char cD = dir;  //get current Direction
+         if (cD == NORTH) {dir = SOUTH;}
+         if (cD == SOUTH) {dir = NORTH;}
+         if (cD == EAST) {dir = WEST;}
+         if (cD == WEST) {dir = EAST;}
+         int nxt = getNode(cN,dir);
+         updateParameters(cN_p, nxt, dir_p);
+         StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
+         StackList <int> dropoff_path2 = pathFind(cN,17,dir);
       }
       while(!fN.isEmpty()) {fN.pop();} //Clear the fN list 
       //Case 1: At node 17
@@ -223,7 +143,7 @@ void navigate(){
         LCD.print("Case 1");
         delay(2000);
         fN.push(4);
-        checkpoint = 2; 
+        checkpoint = 3; 
       }
       //Case 2: At node 4
       else if(cN == 4){
@@ -253,12 +173,6 @@ void navigate(){
           delay(2000);
           fN.push(4); //Direction to face
           checkpoint = 0; 
-      }
-      else{
-        LCD.clear();
-        LCD.home();
-        LCD.print("Cant find dest");
-        delay(2000);
       }
     }
     // Default
@@ -293,8 +207,32 @@ void navigate(){
   }
     if (fN.isEmpty()){  
         //This is some hacky-stuff. If we're at an end-intersection, proceed forward until a collision
-       if (cN == 1 || cN == 7 || cN == 8 || cN == 11 || cN == 15 || cN == 16 || cN == 20){
-          while(!detectCollision()){followTape();}
+       if (cN == 1 || cN == 7 || cN == 8 || cN == 11 || cN == 15 || cN == 16 || cN == 20){      
+          while(!detectCollision()){
+            followTape();
+            double left_ir = analogRead(LEFT_IR);
+            double right_ir = analogRead(RIGHT_IR); 
+            if (((left_ir*5.0/1024.0) > 1.0 || (right_ir*5.0/1024.0) > 1.0)){
+              for(int i=0; i<4;i++){
+                left_ir = left_ir + analogRead(LEFT_IR);
+                right_ir = right_ir + analogRead(RIGHT_IR);
+              }
+            }
+            if (((left_ir*5.0/1024.0) > IR_THRESH || (right_ir*5.0/1024.0) > IR_THRESH) && passenger == false){
+              LCD.clear();
+              LCD.setCursor(0,0);
+              LCD.print("L IR:");
+              LCD.print(left_ir*5.0/1024.0);
+              LCD.setCursor(0,1);
+              LCD.print("R IR:");
+              LCD.print(right_ir*5.0/1024.0);
+              motor.speed(LEFT_MOTOR,0);
+              motor.speed(RIGHT_MOTOR,0);
+              useArm(left_ir,right_ir);
+              passenger = true;
+            }
+          }
+          if(detectCollision()){
            turn(BACKWARD);
            char cD = dir; //get current Direction
            if (cD == NORTH) {dir = SOUTH;}
@@ -304,9 +242,37 @@ void navigate(){
            int nxt = getNode(cN,dir);
            updateParameters(cN_p, nxt, dir_p);
            turnDir = UNDEFINED; //Reset turn
+          }
+          if(passenger == true){
+              StackList <int> dropoff_path1 = pathFind(cN,4,dir); 
+              StackList <int> dropoff_path2 = pathFind(cN,17,dir);
+              turnDir = UNDEFINED; //Reset turn
+              while(!fN.isEmpty()) {fN.pop();} //Clear the fN list 
+              //Case 1: Closer to node 4
+              if(dropoff_path1.count() < dropoff_path2.count()){
+                  while(!dropoff_path1.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path1.peek());fN.push(dropoff_path1.pop());delay(500);} 
+                  LCD.clear();
+                  LCD.home();
+                  LCD.print("Case 3");
+                  delay(2000);
+                  fN.push(17); //Direction to face
+                  checkpoint = 2; 
+              }
+              //Case 2: Closer to node 17
+              else if(dropoff_path2.count() < dropoff_path1.count()){
+                  while(!dropoff_path2.isEmpty()){LCD.clear();LCD.setCursor(0,0);LCD.print(dropoff_path2.peek());fN.push(dropoff_path2.pop());delay(500);} 
+                  LCD.clear();
+                  LCD.home();
+                  LCD.print("Case 4");
+                  delay(2000);
+                  fN.push(4); //Direction to face
+                  checkpoint = 0; 
+              }
+          }
        }  
+       
        // If we have a passenger, drop it off
-       if (passenger == true){ 
+       else if (passenger == true){ 
           int ti = millis(); //Initial time
           int tf = millis(); //Final time
           while (tf-ti < 1500){ //Go forward for 1.5 seconds
@@ -354,7 +320,7 @@ void navigate(){
             LCD.clear();
             LCD.print("Rotation");
             delay(1000);
-            RCServo0.write(150);
+            RCServo0.write(160);
 
             //Lower arm
             LCD.clear();
@@ -404,3 +370,88 @@ void navigate(){
       delay(10000);
     }
 }
+
+void useArm(double left_ir, double right_ir){
+   // --------------------------------------------------------------------- Jenny's arm function --------------------------------------------------------------------------------------------
+        if((left_ir*5.0/1024.0) > IR_THRESH){
+          //Base rotation - Find the direction of the strongest IR signal
+          LCD.clear();
+          LCD.print("Rotation");
+          delay(1000);
+          RCServo0.write(150);
+        
+          //Arm height - lower arm to height of passenger
+          LCD.clear();
+          LCD.print("Lowering arm");
+          delay(1000);
+          RCServo1.write(30);
+        
+          //Claw closing
+          LCD.clear();
+          LCD.print("Closing claw");
+          delay(1000);
+          RCServo2.write(52);
+          
+          //Microswitch detection of passenger
+          if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
+            LCD.clear();
+            LCD.print("Passenger");
+            delay(1000);
+          }
+          
+          //lift arm
+          LCD.clear();
+          LCD.print("Lifting arm");
+          delay(1000);
+          RCServo1.write(180);
+          
+          //Rotate base
+          LCD.clear();
+          LCD.print("Rotation");
+          delay(1000);
+          RCServo0.write(90);
+              
+       }
+
+        if((right_ir*5.0/1024.0) > IR_THRESH){
+          //Base rotation - Find the direction of the strongest IR signal
+          LCD.clear();
+          LCD.print("Rotation");
+          delay(1000);
+          RCServo0.write(5);
+        
+          //Arm height - lower arm to height of passenger
+          LCD.clear();
+          LCD.print("Lowering arm");
+          delay(1000);
+          RCServo1.write(30);
+        
+          //Claw closing
+          LCD.clear();
+          LCD.print("Closing claw");
+          delay(1000);
+          RCServo2.write(52);
+          
+          //Microswitch detection of passenger
+          if(digitalRead(detectionPin_passenger1) == LOW || digitalRead(detectionPin_passenger2) == LOW){
+            LCD.clear();
+            LCD.print("Passenger");
+            delay(1000);
+          }
+          
+          //lift arm
+          LCD.clear();
+          LCD.print("Lifting arm");
+          delay(1000);
+          RCServo1.write(180);
+          
+          //Rotate base
+          LCD.clear();
+          LCD.print("Rotation");
+          delay(1000);
+          RCServo0.write(90);         
+       }
+      // --------------------------------------------------------------------- END ------------------------------------------------------------------------------------------------------------
+      
+}
+
